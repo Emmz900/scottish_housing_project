@@ -1,0 +1,70 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+```
+
+```{r}
+community_belonging <- clean_names(read_csv(here("raw_data/community_belonging.csv")))
+green_spaces <- clean_names(read_csv(here("raw_data/green_spaces.csv")))
+neighbourhood_rating <- clean_names(read_csv(here("raw_data/neighbourhood_rating.csv")))
+```
+
+```{r}
+community_belonging
+green_spaces
+neighbourhood_rating
+```
+
+```{r}
+community_belonging %>% 
+  filter(date_code == 2019,
+         gender == "Female")
+```
+
+
+```{r}
+council_areas <- clean_names(read_csv(here("raw_data/council_area_codes.csv")))
+
+council_areas_clean <- council_areas %>% 
+  select(ca, ca_name) %>% 
+  add_row(ca = "S92000003" ,ca_name = "Scotland")
+```
+
+```{r}
+community_belonging <- community_belonging %>% 
+  left_join(council_areas_clean, by = c("feature_code" = "ca"))
+community_belonging <- community_belonging %>% 
+  mutate(community_belonging = factor(community_belonging, 
+                                      levels = c("Not at all strongly", 
+                                                 "Not very strongly",
+                                                 "Don't know",
+                                                 "Fairly strongly",
+                                                 "Very strongly")))
+```
+```{r}
+community_belonging %>% 
+  filter(date_code == 2019,
+         gender == "Female",
+         ca_name == "East Lothian") %>% 
+  select(measurement:community_belonging) %>% 
+  arrange(community_belonging) %>% 
+  ggplot(aes(community_belonging, value, fill=measurement)) +
+  geom_col(position="dodge") +
+  geom_errorbar(aes(ymin = ))
+```
+
+
+
+
+
+
+
+
+
+
