@@ -1,0 +1,253 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+```
+
+```{r}
+community_belonging <- clean_names(read_csv(here("raw_data/community_belonging.csv")))
+green_spaces <- clean_names(read_csv(here("raw_data/green_spaces.csv")))
+neighbourhood_rating <- clean_names(read_csv(here("raw_data/neighbourhood_rating.csv")))
+```
+
+```{r}
+community_belonging
+green_spaces
+neighbourhood_rating
+```
+# Explore Community Belonging
+```{r}
+community_belonging %>% 
+   summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
+```
+There are no missing values
+
+```{r}
+community_belonging %>% 
+  distinct(units)
+```
+There is only 1 value in this column. It can be removed in the cleaning script
+
+## What is the granularity of the data? 
+```{r}
+community_belonging %>% 
+  filter(date_code == 2019,
+         gender == "Female")
+```
+The feature codes look like council areas. The name of the area if going to be more useful than codes.
+![data source](https://www.opendata.nhs.scot/km/dataset/geography-codes-and-labels)
+```{r}
+council_areas <- clean_names(read_csv(here("raw_data/council_area_codes.csv")))
+
+council_areas_clean <- council_areas %>% 
+  select(ca, ca_name) %>% 
+  add_row(ca = "S92000003" ,ca_name = "Scotland")
+```
+Some rows appear to be for the whole of scotland so I have added a row for this code.
+
+```{r}
+community_belonging <- community_belonging %>% 
+  left_join(council_areas_clean, by = c("feature_code" = "ca"))
+```
+
+When plotting the order of community belonging will not make sense, therefore this should be factored.
+```{r}
+community_belonging <- community_belonging %>% 
+  mutate(community_belonging = factor(community_belonging, 
+                                      levels = c("Not at all strongly", 
+                                                 "Not very strongly",
+                                                 "Don't know",
+                                                 "Fairly strongly",
+                                                 "Very strongly")))
+```
+> Each row appears to be a demographic (eg. Female, more than 10 minutes to nearest greenspace, etc), category of community belonging, measurement, and the percentage of people of that demographic that scored their community belonging at that category. 
+
+```{r}
+community_belonging %>% 
+  distinct(walking_distance_to_nearest_greenspace)
+```
+
+# Data
+
+* feature_code = council area or all of scotland
+* date_code = year between 2013 and 2019
+* measurement = whether the value is a percent, or confidence limit
+* value = percent of people that gave that rating or upper and lower confidence levels for that percentage
+* **community_belonging** = rating of community belonging
+* gender = Male/Female
+* urban_rural_classification = Urban/Rural
+* simd_quintiles = 80% least deprived/20% most deprived
+* type_of_tenure = Owned Mortgage/Loan / Owned Outright / Social Rented / Private Rented / Other
+* household_type = With Children / Pensioners / Adults
+* ethnicity = White / Other
+* **walking_distance_to_nearest_greenspace** = More than 10 minutes / Less than 10 minutes / Don't know
+
+## Quality of data
+```{r}
+community_belonging %>% 
+  group_by(walking_distance_to_nearest_greenspace) %>% 
+  summarise(total = n())
+```
+```{r}
+(105/(4107+1035))*100
+```
+Walking distance to nearest greenspace is likely self reported, only 2% of people do not know the answer and there is a reasonable amount of data that do know.
+
+# Experimental plotting
+
+```{r}
+community_belonging %>% 
+  filter(date_code == 2019,
+         gender == "Female",
+         ca_name == "East Lothian") %>% 
+  select(measurement:community_belonging) %>% 
+  pivot_wider(names_from = measurement, values_from = value) %>% 
+  clean_names() %>% 
+  arrange(community_belonging) %>% 
+  ggplot(aes(community_belonging, percent)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = x95_percent_lower_confidence_limit_percent,
+                    ymax = x95_percent_upper_confidence_limit_percent,
+                    width = 0.2))
+```
+Does this add up to 100%?
+```{r}
+community_belonging %>% 
+  filter(date_code == 2019,
+         gender == "Female",
+         ca_name == "West Lothian") %>% 
+  select(measurement:community_belonging) %>% 
+  pivot_wider(names_from = measurement, values_from = value) %>% 
+  clean_names() %>% 
+  summarise(sum(percent))
+```
+Yes.
+
+## Community belonging and green space
+
+```{r}
+community_belonging %>% 
+  filter(walking_distance_to_nearest_greenspace != "All",
+         ca_name == "Scotland",
+         date_code == 2019) %>% 
+  pivot_wider(names_from = measurement, values_from = value) %>% 
+  clean_names() %>% 
+  ggplot(aes(community_belonging, percent, fill = walking_distance_to_nearest_greenspace)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~walking_distance_to_nearest_greenspace)
+```
+```{r}
+community_belonging %>% 
+  filter(walking_distance_to_nearest_greenspace != "All",
+         ca_name == "Scotland",
+         date_code == 2019) %>% 
+  pivot_wider(names_from = measurement, values_from = value) %>% 
+  clean_names() %>% 
+  group_by(walking_distance_to_nearest_greenspace) %>% 
+  summarise(total = sum(percent))
+```
+It is difficult to quanity the difference.   
+Perhaps we could use a score for community belonging? (0-5 or (-2)-(+2))
+
+```{r}
+community_belonging %>% 
+  distinct(community_belonging)
+```
+
+```{r}
+community_belonging_scored <- community_belonging %>% 
+  mutate(belonging_score = case_when(
+    community_belonging == "Not at all strongly" ~ 1,
+    community_belonging == "Not very strongly" ~ 2,
+    community_belonging == "Don't know" ~ 3,
+    community_belonging == "Fairly strongly" ~ 4,
+    community_belonging == "Very strongly" ~ 5,
+  ),
+  belonging_score_zeroed = case_when(
+    community_belonging == "Not at all strongly" ~ -2,
+    community_belonging == "Not very strongly" ~ -1,
+    community_belonging == "Don't know" ~ 0,
+    community_belonging == "Fairly strongly" ~ 1,
+    community_belonging == "Very strongly" ~ 2,
+  ))
+```
+
+```{r}
+community_belonging_scored %>% 
+  filter(walking_distance_to_nearest_greenspace != "All",
+         ca_name == "Scotland",
+         date_code == 2019) %>% 
+  pivot_wider(names_from = measurement, values_from = value) %>% 
+  clean_names() %>% 
+  mutate(score = percent * belonging_score,
+         score_zero = percent * belonging_score_zeroed) %>% 
+  group_by(walking_distance_to_nearest_greenspace) %>% 
+  summarise(overall_belonging = mean(score),
+            overall_belonging_zero = mean(score_zero)) %>% 
+  ggplot(aes(walking_distance_to_nearest_greenspace, overall_belonging_zero)) +
+  geom_col()
+```
+With normal scoring the maximum possible is 100% scoring 5 -> 500 (0:500)  
+With zeroed score the maximum possible is 100% scoring 2 -> 200 (-200:200)  
+This might be better on a scale of -1 to 1.  
+
+```{r}
+community_belonging_scored %>% 
+  filter(walking_distance_to_nearest_greenspace != "All",
+         ca_name == "Scotland",
+         date_code == 2019) %>% 
+  pivot_wider(names_from = measurement, values_from = value) %>% 
+  clean_names() %>% 
+  mutate(score_zero = (percent * belonging_score_zeroed)/200) %>% 
+  group_by(walking_distance_to_nearest_greenspace) %>% 
+  summarise(overall_belonging_zero = mean(score_zero)) %>% 
+  ggplot(aes(walking_distance_to_nearest_greenspace, overall_belonging_zero)) +
+  geom_col()
+```  
+```{r}
+community_belonging_scored %>% 
+  filter(walking_distance_to_nearest_greenspace != "All",
+         ca_name == "Scotland",
+         date_code == 2019) %>% 
+  pivot_wider(names_from = measurement, values_from = value) %>% 
+  clean_names() %>% 
+  mutate(score_zero = (percent * belonging_score_zeroed)/200) %>% 
+  ggplot(aes(walking_distance_to_nearest_greenspace, score_zero)) +
+  geom_point()
+```  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
