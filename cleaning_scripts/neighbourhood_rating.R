@@ -20,7 +20,7 @@ neighbourhood_rating_clean <- neighbourhood_rating_joined %>%
                                                  "Very good"))
   ) %>% 
   
-  # it will be useful to have a community belonging score for each row (percentage x rating)
+  # it will be useful to have a neighbourhood score for each row (percentage x rating)
   mutate(neighbourhood_score = case_when(
     neighbourhood_rating == "Very poor" ~ value/100 * -1,
     neighbourhood_rating == "Fairly poor" ~ value/100 * -0.5,

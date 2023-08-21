@@ -12,10 +12,11 @@ community_belonging <- read_csv(here("clean_data/community_belonging.csv"))
 ```{r}
 community_belonging %>% 
   filter(area == "Scotland", year == 2019, measurement == "Percent",
-         gender != "All") %>% 
-  group_by(gender) %>% 
+         walking_distance_to_nearest_greenspace != "All",
+         walking_distance_to_nearest_greenspace != "Don't Know") %>% 
+  group_by(walking_distance_to_nearest_greenspace) %>% 
   summarise(mean_score = mean(belonging_score)) %>% 
-  ggplot(aes(gender, mean_score)) +
+  ggplot(aes(walking_distance_to_nearest_greenspace, mean_score)) +
   geom_col()
 ```
 ```{r}
@@ -38,6 +39,67 @@ community_belonging %>%
   geom_col() +
   facet_wrap(~gender)
 ```
+
+```{r}
+neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv"))
+neighbourhood_rating
+```
+```{r}
+neighbourhood_rating %>% 
+  filter(area == "Scotland", measurement == "Percent",
+         !walking_distance_to_nearest_greenspace %in% c("All", "Don't Know")) %>% 
+  group_by(walking_distance_to_nearest_greenspace, year) %>% 
+  summarise(mean_score = mean(neighbourhood_score)) %>% 
+  ggplot(aes(year, mean_score, colour = walking_distance_to_nearest_greenspace)) +
+  geom_line()
+```
+```{r}
+neighbourhood_rating %>% 
+  filter(area == "Scotland", measurement == "Percent",
+         !walking_distance_to_nearest_greenspace %in% c("All", "Don't Know"),
+         year == 2019) %>% 
+  group_by(walking_distance_to_nearest_greenspace) %>% 
+  summarise(mean_score = mean(neighbourhood_score)) %>% 
+  ggplot(aes(walking_distance_to_nearest_greenspace, mean_score)) +
+  geom_col()
+```
+
+
+```{r}
+neighbourhood_rating %>% 
+  group_by(walking_distance_to_nearest_greenspace) %>% 
+  summarise(count = n())
+```
+```{r}
+(102/(3708+915))*100
+```
+# Join the data?
+```{r}
+community_belonging
+neighbourhood_rating
+```
+```{r}
+neighbourhood_rating_id <- neighbourhood_rating %>% 
+  rowwise() %>% 
+  mutate(id = str_c(feature_code, year, measurement, gender,
+                  urban_rural_classification, simd_quintiles, type_of_tenure,
+                  household_type, ethnicity, walking_distance_to_nearest_greenspace))
+
+community_belonging_id <- community_belonging %>% 
+  rowwise() %>% 
+  mutate(id = str_c(feature_code, year, measurement, gender,
+                  urban_rural_classification, simd_quintiles, type_of_tenure,
+                  household_type, ethnicity, walking_distance_to_nearest_greenspace))
+# need to convert ratings into matching categories (1:5?)
+neighbourhood_rating_id %>% 
+  select(-c(feature_code, year, measurement, gender,
+                  urban_rural_classification, simd_quintiles, type_of_tenure,
+                  household_type, ethnicity, area, walking_distance_to_nearest_greenspace)) %>% 
+  rename("neighbourhood_value" = value) %>% 
+  full_join(community_belonging_id, by = join_by(id))
+```
+
+
 
 
 

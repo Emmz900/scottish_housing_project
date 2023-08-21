@@ -254,6 +254,8 @@ green_spaces %>%
   ggplot(aes(date_code, value, colour = distance_to_nearest_green_or_blue_space)) +
   geom_line()
 ```
+# Neighbourhood Rating
+
 ```{r}
 neighbourhood_rating %>% 
   distinct(neighbourhood_rating)
