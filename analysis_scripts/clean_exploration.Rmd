@@ -1,0 +1,47 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(here)
+
+community_belonging <- read_csv(here("clean_data/community_belonging.csv"))
+```
+```{r}
+community_belonging %>% 
+  filter(area == "Scotland", year == 2019, measurement == "Percent",
+         gender != "All") %>% 
+  group_by(gender) %>% 
+  summarise(mean_score = mean(belonging_score)) %>% 
+  ggplot(aes(gender, mean_score)) +
+  geom_col()
+```
+```{r}
+community_belonging %>% 
+  filter(area == "Scotland", measurement == "Percent",
+         gender != "All") %>% 
+  group_by(gender, year) %>% 
+  summarise(mean_score = mean(belonging_score)) %>% 
+  ggplot(aes(year, mean_score, colour = gender)) +
+  geom_line()
+```
+
+
+
+```{r}
+community_belonging %>% 
+  filter(area == "Scotland", year == 2019, measurement == "Percent",
+         gender != "All") %>% 
+  ggplot(aes(community_belonging, value, fill = community_belonging)) +
+  geom_col() +
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+

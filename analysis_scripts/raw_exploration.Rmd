@@ -72,7 +72,7 @@ community_belonging %>%
   distinct(walking_distance_to_nearest_greenspace)
 ```
 
-# Data
+## Data
 
 * feature_code = council area or all of scotland
 * date_code = year between 2013 and 2019
@@ -87,7 +87,7 @@ community_belonging %>%
 * ethnicity = White / Other
 * **walking_distance_to_nearest_greenspace** = More than 10 minutes / Less than 10 minutes / Don't know
 
-## Quality of data
+### Quality of data
 ```{r}
 community_belonging %>% 
   group_by(walking_distance_to_nearest_greenspace) %>% 
@@ -98,7 +98,7 @@ community_belonging %>%
 ```
 Walking distance to nearest greenspace is likely self reported, only 2% of people do not know the answer and there is a reasonable amount of data that do know.
 
-# Experimental plotting
+## Experimental plotting
 
 ```{r}
 community_belonging %>% 
@@ -208,7 +208,8 @@ community_belonging_scored %>%
   summarise(overall_belonging_zero = mean(score_zero)) %>% 
   ggplot(aes(walking_distance_to_nearest_greenspace, overall_belonging_zero)) +
   geom_col()
-```  
+``` 
+
 ```{r}
 community_belonging_scored %>% 
   filter(walking_distance_to_nearest_greenspace != "All",
@@ -221,9 +222,42 @@ community_belonging_scored %>%
   geom_point()
 ```  
 
+App should explore community belonging for each group.
 
+# Green spaces
+```{r}
+green_spaces
+green_spaces %>% 
+  distinct(age)
+```
+* feature_code = council area or all of scotland
+* date_code = year between 2013 and 2019
+* measurement = whether the value is a percent, or confidence limit
+* value = percent of people that gave that rating or upper and lower confidence levels for that percentage
+* **distance_to_nearest_green_or_blue_space** = 5 minute walk or less / 6-10 minute walk / 11+ minute walk / Don't know
+* age = 16-34 / 35-64 / 65+
+* gender = Male/Female
+* urban_rural_classification = Urban/Rural
+* simd_quintiles = 80% least deprived/20% most deprived
+* type_of_tenure = Owned Mortgage/Loan / Owned Outright / Social Rented / Private Rented / Other
+* household_type = With Children / Pensioners / Adults
+* ethnicity = White / Other
 
+This dataset tells us who has access to green or blue spaces within 10 minutes.
 
+```{r}
+green_spaces %>% 
+  left_join(council_areas_clean, by = c("feature_code" = "ca")) %>% 
+  filter(ca_name == "Scotland",
+         urban_rural_classification == "Urban",
+         measurement == "Percent") %>% 
+  ggplot(aes(date_code, value, colour = distance_to_nearest_green_or_blue_space)) +
+  geom_line()
+```
+```{r}
+neighbourhood_rating %>% 
+  distinct(neighbourhood_rating)
+```
 
 
 

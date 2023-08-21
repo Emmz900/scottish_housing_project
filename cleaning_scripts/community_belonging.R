@@ -6,7 +6,7 @@ community_belonging <- clean_names(read_csv("raw_data/community_belonging.csv"))
 
 # Join council names to data -----------
 community_belonging_joined <- community_belonging %>% 
-  left_join(council_areas_clean, by = c("feature_code" = "ca"))
+  left_join(council_areas, by = c("feature_code" = "ca"))
 
 # Cleaning ----------------------
 # There is no missing data in this dataset
@@ -30,7 +30,9 @@ community_belonging_clean <- community_belonging_joined %>%
   )) %>% 
   
   # the units are all "Percent Of Adults" therefore `units` is not a necessary column
-  select(-units)
+  select(-units) %>% 
+  rename("area" = ca_name) %>% 
+  rename("year" = date_code)
 
 # Write clean data -----------------
 write_csv(community_belonging_clean, "clean_data/community_belonging.csv")
