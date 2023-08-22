@@ -25,7 +25,7 @@ neighbourhood_rating
 community_belonging %>% 
    summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
 ```
-There are no missing values
+There are no NA values
 
 ```{r}
 community_belonging %>% 
@@ -42,6 +42,23 @@ community_belonging %>%
   nrow()
 ```
 No duplicates
+
+```{r}
+community_belonging %>% 
+  filter(feature_code == "S12000036", year == "2016",
+         walking_distance_to_nearest_greenspace == "More than 10 minutes")
+```
+There appear to be some missing values such as how many people voted "Don't know" to community belonging where the walking distance is greater than 10 minutes. Is it sensible to assume this is 0?
+
+```{r}
+community_belonging %>% 
+  filter(feature_code == "S12000036", year == "2016",
+         walking_distance_to_nearest_greenspace == "More than 10 minutes",
+         measurement == "Percent") %>% 
+  summarise(sum(value))
+```
+Yes, the others add up to 100% so 0% voted "Don't know".
+
 
 ## What is the granularity of the data? 
 ```{r}
@@ -277,6 +294,7 @@ neighbourhood_rating %>%
 neighbourhood_rating %>% 
   nrow()
 ```
+
 
 
 ```{r}

@@ -3,6 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+# Community belonging
 ```{r}
 library(tidyverse)
 library(here)
@@ -39,6 +40,7 @@ community_belonging %>%
   geom_col() +
   facet_wrap(~gender)
 ```
+# Neighbourhood rating
 
 ```{r}
 neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv"))
@@ -129,21 +131,191 @@ community_belonging_id <- community_belonging %>%
 ```
 
 ```{r}
+community_belonging_id %>% 
+  summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
+
+neighbourhood_rating_id %>% 
+  summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
+
+```
+
+```{r}
 ratings_joined <- neighbourhood_rating_id %>% 
   select(-c(feature_code, year, measurement, gender,
             urban_rural_classification, simd_quintiles, type_of_tenure,
             household_type, ethnicity, area,
             walking_distance_to_nearest_greenspace, rating)) %>% 
   full_join(community_belonging_id, by = join_by(id)) %>% 
-  select(rating, measurement, community_value, belonging_score,
+  select(id, rating, measurement, community_value, belonging_score,
          neighbourhood_value, neighbourhood_score, area, year,
-         gender:walking_distance_to_nearest_greenspace)
+         gender:walking_distance_to_nearest_greenspace) %>% 
+  arrange(area, year, rating)
 ```
 
+The missing values seen in the raw analysis are now causing issues.
+It will be easier to do the analysis on the datasets separately. 
+
 ```{r}
-neighbourhood_rating %>% 
-  distinct()
-neighbourhood_rating
+community_belonging_id %>% 
+  filter(feature_code == "S12000036", year == "2016", measurement == "Lower", rating == 3)
+```
+
+
+```{r}
+ratings_joined %>% 
+    filter(area == "Scotland", measurement == "Percent",
+         walking_distance_to_nearest_greenspace != "All") %>% 
+  group_by(walking_distance_to_nearest_greenspace, year) %>% 
+  summarise(mean_community = mean(belonging_score),
+            mean_neighbourhood = mean(neighbourhood_score)) %>% 
+  ggplot(aes(year, mean_community, colour = walking_distance_to_nearest_greenspace)) +
+  geom_line()
+
+ratings_joined %>% 
+    filter(area == "Scotland", measurement == "Percent",
+         walking_distance_to_nearest_greenspace != "All") %>% 
+  group_by(walking_distance_to_nearest_greenspace, year) %>% 
+  summarise(mean_community = mean(belonging_score),
+            mean_neighbourhood = mean(neighbourhood_score)) %>% 
+  ggplot(aes(year, mean_neighbourhood, colour = walking_distance_to_nearest_greenspace)) +
+  geom_line()
+```
+# Modelling
+
+## Neighbourhood
+```{r}
+library(ggfortify)
+library(GGally)
+library(rpart)
+library(rpart.plot)
+```
+```{r}
+n_data <- nrow(neighbourhood_rating)
+test_prop <- 0.2
+
+test_index <- sample(1:n_data, n_data * test_prop)
+
+neighbour_test <- slice(neighbourhood_rating, test_index)
+neighbour_train <- slice(neighbourhood_rating, -test_index)
+```
+
+```{r message=FALSE, warning=FALSE}
+neighbour_train %>% 
+  filter(measurement == "Percent") %>% 
+  select(neighbourhood_score, year, gender, urban_rural_classification, simd_quintiles) %>% 
+  ggpairs()
+  
+neighbour_train %>% 
+  filter(measurement == "Percent") %>% 
+  select(neighbourhood_score, walking_distance_to_nearest_greenspace, ethnicity,
+         household_type, type_of_tenure) %>% 
+  ggpairs()
+```
+```{r}
+mod1a <- lm(neighbourhood_score ~ urban_rural_classification, neighbour_train)
+mod1b <- lm(neighbourhood_score ~ simd_quintiles, neighbour_train)
+
+summary(mod1a)
+summary(mod1b)
+```
+```{r}
+autoplot(mod1a)
+autoplot(mod1b)
+```
+```{r}
+mod2a <- lm(neighbourhood_score ~ simd_quintiles + urban_rural_classification,
+            neighbour_train)
+mod2b <- lm(neighbourhood_score ~ year + gender + urban_rural_classification +
+    simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
+         household_type + type_of_tenure,
+    neighbour_train)
+
+summary(mod2a)
+summary(mod2b)
+```
+```{r}
+mod3a <- lm(neighbourhood_score ~ gender + urban_rural_classification +
+    simd_quintiles + ethnicity + household_type + type_of_tenure,
+    neighbour_train)
+mod3b <- lm(neighbourhood_score ~ gender + urban_rural_classification +
+    simd_quintiles + household_type + type_of_tenure,
+    neighbour_train)
+
+summary(mod3a)
+summary(mod3b)
+```
+### Conclusions
+
+* Important factors are:
+  - gender
+  - urban/rural
+  - SIMD
+  - household type
+  - type of tenure
+  
+Most likely people to give higher neighbourhood ratings:
+  - 80% least deprived
+  - home owners (outright)
+  - rural setting
+  - home owners (mortgage)
+  - pensioners
+  - females
+
+## Community
+
+```{r}
+n_data_2 <- nrow(community_belonging)
+
+test_index <- sample(1:n_data_2, n_data_2 * test_prop)
+
+community_test <- slice(community_belonging, test_index)
+community_train <- slice(community_belonging, -test_index)
+```
+
+**GOT TO HERE**
+
+```{r message=FALSE, warning=FALSE}
+train %>% 
+  filter(measurement == "Percent") %>% 
+  select(belonging_score, year, gender, urban_rural_classification, simd_quintiles) %>% 
+  ggpairs()
+  
+train %>% 
+  filter(measurement == "Percent") %>% 
+  select(belonging_score, walking_distance_to_nearest_greenspace, ethnicity,
+         household_type, type_of_tenure) %>% 
+  ggpairs()
+```
+```{r}
+mod1a <- lm(belonging_score ~ year + gender + urban_rural_classification +
+    simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
+         household_type + type_of_tenure, train)
+summary(mod1a)
+```
+```{r}
+mod1b <- lm(belonging_score ~ gender + urban_rural_classification +
+    simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
+         household_type + type_of_tenure, train)
+summary(mod1b)
+```
+# Analysis
+
+* What is the average community belonging?
+* What is the average neighbourhood score?
+* Which groups have a significantly higher score?
+* Which groups have a significantly lower score?
+
+```{r}
+ratings_joined %>% 
+  filter(is.na(neighbourhood_value)) #!!!!
+
+ratings_joined %>% 
+  filter(measurement == "Percent") %>% 
+  select(rating, community_value, neighbourhood_value) %>% 
+  mutate(community_score = community_value * rating,
+         neighbourhood_score = neighbourhood_value * rating) %>% 
+  summarise(avg_community = mean(community_score),
+            avg_neighbour = mean(neighbourhood_score))
 ```
 
 
