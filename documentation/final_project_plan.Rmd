@@ -17,7 +17,7 @@ output:
 
 *What insights can the business/organisation gain from your analysis and how will your analysis help the business/organisation make better decisions?*
 
-This analysis will help the Scottish Government understand the importance of access to green space and if there are any particular groups with limited access. The insights will help drive decision making to improve access to green space, and communities.
+This analysis will help the Scottish Government understand the factors which influence community belonging and neighbourhood ratings. This will help identify groups and areas with a low sense of community, or lower neighbourhood ratings which could be targeted with schemes to improve this.
 
 ## Domain knowledge and the business context
 
