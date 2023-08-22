@@ -42,7 +42,14 @@ community_belonging %>%
 ```
 # Neighbourhood rating
 ```{r}
-neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv"))
+neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>% 
+  mutate(neighbourhood_rating = factor(neighbourhood_rating, 
+                                      levels = c("Very poor", 
+                                                 "Fairly poor",
+                                                 "No opinion",
+                                                 "Fairly good",
+                                                 "Very good"))
+  )
 neighbourhood_rating
 ```
 ```{r}
@@ -628,6 +635,63 @@ create_2019_community_graph(walking_distance_to_nearest_greenspace)
 ```
 
 ```{r}
+create_2019_neighbourhood_graph <- function(category){
+  neighbourhood_rating %>% 
+  filter(area == "Scotland", measurement == "Percent", {{category}} != "All",
+         year == "2019") %>% 
+  select({{category}}, neighbourhood_rating, value) %>% 
+  ggplot(aes(neighbourhood_rating, value, fill = {{category}})) +
+  geom_col(position = "dodge") +
+  geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+  #facet_wrap(~{{category}}) +
+  scale_y_continuous(limits = c(0, 100)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 16)) +
+  labs(
+    title = "Neighbourhood Rating in 2019",
+    x = "Neighbourhood Rating",
+    y = "Percentage of survey responses",
+    fill = "Classification"
+  ) #+
+  #scale_fill_manual(values = c("Rural" = "darkgreen", "Urban" = "darkgrey"))
+}
+```
 
+```{r}
+#categories <- c("ethnicity", "type_of_tenure", "simd_quintiles", "household_type",
+               # "urban_rural_classification", "gender", "walking_distance_to_nearest_greenspace")
+
+create_2019_neighbourhood_graph(ethnicity)
+create_2019_neighbourhood_graph(type_of_tenure)
+create_2019_neighbourhood_graph(simd_quintiles)
+create_2019_neighbourhood_graph(household_type)
+create_2019_neighbourhood_graph(urban_rural_classification)
+create_2019_neighbourhood_graph(gender)
+create_2019_neighbourhood_graph(walking_distance_to_nearest_greenspace)
+```
+
+```{r}
+neighbourhood_rating %>% 
+  filter(area == "Scotland", measurement == "Percent", gender != "All",
+         year == "2019") %>% 
+  select(gender, neighbourhood_rating, value) %>% 
+  ggplot(aes(neighbourhood_rating, value, fill = gender)) +
+  geom_col(position = "dodge") +
+  geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+  scale_y_continuous(limits = c(0, 100)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 16)) +
+  labs(
+    title = "Neighbourhood Rating in 2019",
+    x = "Neighbourhood Rating",
+    y = "Percentage of survey responses",
+    fill = "Classification"
+  )
 ```
 

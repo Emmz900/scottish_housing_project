@@ -23,13 +23,20 @@ community_belonging <- read_csv(here("clean_data/community_belonging.csv")) %>%
                                                  "Don't know",
                                                  "Fairly strongly",
                                                  "Very strongly")))
-neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv"))
+neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>% 
+  mutate(neighbourhood_rating = factor(neighbourhood_rating, 
+                                      levels = c("Very poor", 
+                                                 "Fairly poor",
+                                                 "No opinion",
+                                                 "Fairly good",
+                                                 "Very good")))
 ```
 
 ### Functions
 ```{r}
 source(here("analysis_scripts_and_functions/test_diff_in_means.R"))
 source(here("analysis_scripts_and_functions/visualise_diff_in_means.R"))
+source(here("analysis_scripts_and_functions/create_2019_graph.R"))
 ```
 
 # Background
@@ -109,6 +116,6 @@ community_belonging %>%
 
 # Does access to greenspace impact neighbourhood ratings or community belonging?
 ```{r}
-
+create_2019_neighbourhood_graph(walking_distance_to_nearest_greenspace)
 ```
 
