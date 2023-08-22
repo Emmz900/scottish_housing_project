@@ -97,9 +97,9 @@ neighbourhood_rating_id <- neighbourhood_rating %>%
   rowwise() %>% 
   mutate(
     id = str_c(feature_code, year, measurement, gender,
-             urban_rural_classification, simd_quintiles, type_of_tenure,
-             household_type, ethnicity,
-             walking_distance_to_nearest_greenspace, rating)
+               urban_rural_classification, simd_quintiles, type_of_tenure,
+               household_type, ethnicity,
+               walking_distance_to_nearest_greenspace, rating)
   ) %>% 
   ungroup() %>% 
   select(-neighbourhood_rating) %>% 
@@ -121,9 +121,9 @@ community_belonging_id <- community_belonging %>%
   rowwise() %>% 
   mutate(
     id = str_c(feature_code, year, measurement, gender,
-             urban_rural_classification, simd_quintiles, type_of_tenure,
-             household_type, ethnicity,
-             walking_distance_to_nearest_greenspace, rating)
+               urban_rural_classification, simd_quintiles, type_of_tenure,
+               household_type, ethnicity,
+               walking_distance_to_nearest_greenspace, rating)
   ) %>% 
   ungroup() %>% 
   select(-community_belonging) %>% 
@@ -163,7 +163,7 @@ community_belonging_id %>%
 
 ```{r}
 ratings_joined %>% 
-    filter(area == "Scotland", measurement == "Percent",
+  filter(area == "Scotland", measurement == "Percent",
          walking_distance_to_nearest_greenspace != "All") %>% 
   group_by(walking_distance_to_nearest_greenspace, year) %>% 
   summarise(mean_community = mean(belonging_score),
@@ -172,7 +172,7 @@ ratings_joined %>%
   geom_line()
 
 ratings_joined %>% 
-    filter(area == "Scotland", measurement == "Percent",
+  filter(area == "Scotland", measurement == "Percent",
          walking_distance_to_nearest_greenspace != "All") %>% 
   group_by(walking_distance_to_nearest_greenspace, year) %>% 
   summarise(mean_community = mean(belonging_score),
@@ -204,7 +204,7 @@ neighbour_train %>%
   filter(measurement == "Percent") %>% 
   select(neighbourhood_score, year, gender, urban_rural_classification, simd_quintiles) %>% 
   ggpairs()
-  
+
 neighbour_train %>% 
   filter(measurement == "Percent") %>% 
   select(neighbourhood_score, walking_distance_to_nearest_greenspace, ethnicity,
@@ -226,20 +226,20 @@ autoplot(mod1b)
 mod2a <- lm(neighbourhood_score ~ simd_quintiles + urban_rural_classification,
             neighbour_train)
 mod2b <- lm(neighbourhood_score ~ year + gender + urban_rural_classification +
-    simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
-         household_type + type_of_tenure,
-    neighbour_train)
+              simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
+              household_type + type_of_tenure,
+            neighbour_train)
 
 summary(mod2a)
 summary(mod2b)
 ```
 ```{r}
 mod3a <- lm(neighbourhood_score ~ gender + urban_rural_classification +
-    simd_quintiles + ethnicity + household_type + type_of_tenure,
-    neighbour_train)
+              simd_quintiles + ethnicity + household_type + type_of_tenure,
+            neighbour_train)
 mod3b <- lm(neighbourhood_score ~ gender + urban_rural_classification +
-    simd_quintiles + household_type + type_of_tenure,
-    neighbour_train)
+              simd_quintiles + household_type + type_of_tenure,
+            neighbour_train)
 
 summary(mod3a)
 summary(mod3b)
@@ -247,19 +247,19 @@ summary(mod3b)
 ### Conclusions
 
 * Important factors are:
-  - gender
-  - urban/rural
-  - SIMD
-  - household type
-  - type of tenure
-  
+- gender
+- urban/rural
+- SIMD
+- household type
+- type of tenure
+
 Most likely people to give higher neighbourhood ratings:
-  - 80% least deprived
-  - home owners (outright)
-  - rural setting
-  - home owners (mortgage)
-  - pensioners
-  - females
+- 80% least deprived
+- home owners (outright)
+- rural setting
+- home owners (mortgage)
+- pensioners
+- females
 
 ## Community
 
@@ -272,15 +272,14 @@ community_test <- slice(community_belonging, test_index)
 community_train <- slice(community_belonging, -test_index)
 ```
 
-**GOT TO HERE**
 
 ```{r message=FALSE, warning=FALSE}
-train %>% 
+community_train %>% 
   filter(measurement == "Percent") %>% 
   select(belonging_score, year, gender, urban_rural_classification, simd_quintiles) %>% 
   ggpairs()
-  
-train %>% 
+
+community_train %>% 
   filter(measurement == "Percent") %>% 
   select(belonging_score, walking_distance_to_nearest_greenspace, ethnicity,
          household_type, type_of_tenure) %>% 
@@ -288,16 +287,34 @@ train %>%
 ```
 ```{r}
 mod1a <- lm(belonging_score ~ year + gender + urban_rural_classification +
-    simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
-         household_type + type_of_tenure, train)
+              simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
+              household_type + type_of_tenure, community_train)
 summary(mod1a)
 ```
 ```{r}
 mod1b <- lm(belonging_score ~ gender + urban_rural_classification +
-    simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
-         household_type + type_of_tenure, train)
+              simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
+              household_type + type_of_tenure, community_train)
 summary(mod1b)
 ```
+
+### Conclusions
+
+* Important factors are:
+- type of tenure
+- SIMD
+- ethnicity
+- household type
+- urban/rural
+- walking distance to greenspace
+- gender
+
+*Least* likely people to feel greater community belonging:
+- private rented
+- non-white ethnicity
+- people who don't where where the nearest greenspace is
+- other types of tenure
+
 # Analysis
 
 * What is the average community belonging?
@@ -306,22 +323,267 @@ summary(mod1b)
 * Which groups have a significantly lower score?
 
 ```{r}
-ratings_joined %>% 
-  filter(is.na(neighbourhood_value)) #!!!!
+library(infer)
+```
 
-ratings_joined %>% 
+## Community/type of tenure
+```{r}
+average_community_belonging <- community_belonging %>% 
   filter(measurement == "Percent") %>% 
-  select(rating, community_value, neighbourhood_value) %>% 
-  mutate(community_score = community_value * rating,
-         neighbourhood_score = neighbourhood_value * rating) %>% 
-  summarise(avg_community = mean(community_score),
-            avg_neighbour = mean(neighbourhood_score))
+  summarise(avg_rating = mean(belonging_score)) %>% 
+  pull()
+
+average_community_belonging
+```
+
+```{r}
+community_belonging %>% 
+  filter(measurement == "Percent") %>% 
+  group_by(type_of_tenure) %>% 
+  summarise(avg_rating = mean(belonging_score),
+            overall_avg = average_community_belonging)
+```
+### H0: `Owned Mortgage/Loan` and `Owned Outright` have the same mean (and can therefore be grouped)
+
+```{r}
+vars <- c("Owned Outright", "Owned Mortgage/Loan")
+
+null_dist <- community_belonging %>% 
+  filter(type_of_tenure %in% vars) %>% 
+  specify(belonging_score ~ type_of_tenure) %>% 
+  hypothesise(null = "independence") %>% 
+  generate(reps = 500, type = "permute") %>% 
+  calculate(stat = "diff in means",
+            order = vars)
+
+obs_stat <- community_belonging %>% 
+  filter(type_of_tenure %in% vars) %>% 
+  specify(belonging_score ~ type_of_tenure) %>% 
+  calculate(stat = "diff in means",
+            order = vars)
 ```
 
 
+```{r}
+null_dist %>% 
+  visualise() +
+  shade_p_value(obs_stat = obs_stat, direction = "both")
+
+```
+```{r}
+null_dist %>% 
+  get_p_value(obs_stat = obs_stat, direction = "both")
+```
+At 95% confidence level I cannot be confident that they are different. I will therefore leave them as separate groups.
+
+## H0: `Owned Outright` mean is greater than the average mean
+
+```{r}
+null_dist <- community_belonging %>% 
+  filter(type_of_tenure == "Owned Outright") %>% 
+  #select(belonging_score) %>% 
+  specify(response = belonging_score) %>% 
+  hypothesise(null = "point",
+              mu = average_community_belonging) %>% 
+  generate(reps = 500, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+obs_stat <- community_belonging %>% 
+  filter(type_of_tenure == "Owned Outright") %>%
+  specify(response = belonging_score) %>% 
+  calculate(stat = "mean")
+```
 
 
+```{r}
+null_dist %>% 
+  visualise() +
+  shade_p_value(obs_stat = obs_stat, direction = "right")
+```
+```{r}
+null_dist %>% 
+  get_p_value(obs_stat = obs_stat, direction = "both")
+```
+
+```{r}
+null_dist <- community_belonging %>% 
+  select(belonging_score, type_of_tenure) %>% 
+  mutate(owned_outright = (type_of_tenure == "Owned Outright")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(belonging_score ~ owned_outright) %>% 
+  hypothesise(null = "independence") %>% 
+  generate(reps = 500, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+
+obs_stat <- community_belonging %>% 
+  select(belonging_score, type_of_tenure) %>% 
+  mutate(owned_outright = (type_of_tenure == "Owned Outright")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(belonging_score ~ owned_outright) %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+```
 
 
+```{r}
+null_dist %>% 
+  visualise() +
+  shade_p_value(obs_stat = obs_stat, direction = "right")
+```
+```{r}
+null_dist %>% 
+  get_p_value(obs_stat = obs_stat, direction = "both")
+```
+### Owned outright has a statistically higher community rating than the average
 
+## `Owned Mortgage/Loan`
+
+```{r}
+null_dist <- community_belonging %>% 
+  select(belonging_score, type_of_tenure) %>% 
+  mutate(owned_mortgage = (type_of_tenure == "Owned Mortgage/Loan")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(belonging_score ~ owned_mortgage) %>% 
+  hypothesise(null = "independence") %>% 
+  generate(reps = 500, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+
+obs_stat <- community_belonging %>% 
+  select(belonging_score, type_of_tenure) %>% 
+  mutate(owned_mortgage = (type_of_tenure == "Owned Mortgage/Loan")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(belonging_score ~ owned_mortgage) %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+```
+
+
+```{r}
+null_dist %>% 
+  visualise() +
+  shade_p_value(obs_stat = obs_stat, direction = "right")
+```
+```{r}
+null_dist %>% 
+  get_p_value(obs_stat = obs_stat, direction = "right")
+```
+### Owned outright has a statistically higher community rating than the average
+
+## `Private Rented`
+
+```{r}
+null_dist <- community_belonging %>% 
+  select(belonging_score, type_of_tenure) %>% 
+  mutate(rented = (type_of_tenure == "Private Rented")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(belonging_score ~ rented) %>% 
+  hypothesise(null = "independence") %>% 
+  generate(reps = 500, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+
+obs_stat <- community_belonging %>% 
+  select(belonging_score, type_of_tenure) %>% 
+  mutate(rented = (type_of_tenure == "Private Rented")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(belonging_score ~ rented) %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+```
+
+
+```{r}
+null_dist %>% 
+  visualise() +
+  shade_p_value(obs_stat = obs_stat, direction = "left")
+```
+```{r}
+null_dist %>% 
+  get_p_value(obs_stat = obs_stat, direction = "left")
+```
+### Private rented has a statistically lower community rating than the average
+
+## `Social Rented`
+
+```{r}
+null_dist <- community_belonging %>% 
+  filter(type_of_tenure %in% c("All", "Social Rented")) %>% 
+  select(score, type_of_tenure) %>% 
+  mutate(rented = (type_of_tenure == "Social Rented")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(score ~ rented) %>% 
+  hypothesise(null = "independence") %>% 
+  generate(reps = 500, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+
+obs_stat <- community_belonging %>% 
+  filter(type_of_tenure %in% c("All", "Social Rented")) %>% 
+  select(score, type_of_tenure) %>% 
+  mutate(rented = (type_of_tenure == "Social Rented")) %>% 
+  select(-type_of_tenure) %>% 
+  specify(score ~ rented) %>% 
+  calculate(stat = "diff in means", order = c(TRUE, FALSE))
+```
+
+
+```{r}
+null_dist %>% 
+  visualise() +
+  shade_p_value(obs_stat = obs_stat, direction = "both")
+```
+```{r}
+null_dist %>% 
+  get_p_value(obs_stat = obs_stat, direction = "both") %>% 
+  pull()
+```
+### Social rented has no impact
+
+
+# Function for statistical testing
+```{r}
+test_diff_in_means <- function(data, column, category, n_reps = 500){
+  null_dist <- data %>% 
+    filter({{column}} %in% c("All", category)) %>% 
+    mutate(test = ({{column}} == category)) %>% 
+    specify(score ~ test) %>% 
+    hypothesise(null = "independence") %>% 
+    generate(reps = n_reps, type = "permute") %>% 
+    calculate(stat = "diff in means", order = c(TRUE, FALSE))
+  
+  obs_stat <- data %>% 
+    filter({{column}} %in% c("All", category)) %>% 
+    mutate(test = ({{column}} == category)) %>% 
+    specify(score ~ test) %>%  
+    calculate(stat = "diff in means", order = c(TRUE, FALSE))
+  
+  p <- null_dist %>% 
+    get_p_value(obs_stat = obs_stat, direction = "both") %>% 
+    pull()
+  
+  cat(category, ": p = ", p, sep = "")
+}
+```
+
+```{r}
+visualise_diff_in_means <- function(data, column, category, n_reps = 500){
+  null_dist <- data %>% 
+    filter({{column}} %in% c("All", category)) %>% 
+    mutate(test = ({{column}} == category)) %>% 
+    specify(score ~ test) %>% 
+    hypothesise(null = "independence") %>% 
+    generate(reps = n_reps, type = "permute") %>% 
+    calculate(stat = "diff in means", order = c(TRUE, FALSE))
+  
+  obs_stat <- data %>% 
+    filter({{column}} %in% c("All", category)) %>% 
+    mutate(test = ({{column}} == category)) %>% 
+    specify(score ~ test) %>%  
+    calculate(stat = "diff in means", order = c(TRUE, FALSE))
+  
+  null_dist %>% 
+    visualise() +
+    shade_p_value(obs_stat = obs_stat, direction = "both")
+}
+```
+
+```{r}
+test_diff_in_means(community_belonging, type_of_tenure, "Owned Outright")
+visualise_diff_in_means(community_belonging, type_of_tenure, "Owned Outright")
+```
 

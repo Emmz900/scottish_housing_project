@@ -21,12 +21,12 @@ neighbourhood_rating_clean <- neighbourhood_rating_joined %>%
   ) %>% 
   
   # it will be useful to have a neighbourhood score for each row (percentage x rating)
-  mutate(neighbourhood_score = case_when(
-    neighbourhood_rating == "Very poor" ~ value/100 * -1,
-    neighbourhood_rating == "Fairly poor" ~ value/100 * -0.5,
-    neighbourhood_rating == "No opinion" ~ 0,
-    neighbourhood_rating == "Fairly good" ~ value/100 * 0.5,
-    neighbourhood_rating == "Very good" ~ value/100 * 1
+  mutate(score = case_when(
+    neighbourhood_rating == "Very poor" ~ value/100 * 1,
+    neighbourhood_rating == "Fairly poor" ~ value/100 * 2,
+    neighbourhood_rating == "No opinion" ~ 3,
+    neighbourhood_rating == "Fairly good" ~ value/100 * 4,
+    neighbourhood_rating == "Very good" ~ value/100 * 5
   )) %>% 
   
   # the units are all "Percent Of Adults" therefore `units` is not a necessary column
