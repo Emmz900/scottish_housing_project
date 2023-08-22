@@ -16,7 +16,7 @@ community_belonging %>%
          walking_distance_to_nearest_greenspace != "All",
          walking_distance_to_nearest_greenspace != "Don't Know") %>% 
   group_by(walking_distance_to_nearest_greenspace) %>% 
-  summarise(mean_score = mean(belonging_score)) %>% 
+  summarise(mean_score = mean(score)) %>% 
   ggplot(aes(walking_distance_to_nearest_greenspace, mean_score)) +
   geom_col()
 ```
@@ -25,7 +25,7 @@ community_belonging %>%
   filter(area == "Scotland", measurement == "Percent",
          gender != "All") %>% 
   group_by(gender, year) %>% 
-  summarise(mean_score = mean(belonging_score)) %>% 
+  summarise(mean_score = mean(score)) %>% 
   ggplot(aes(year, mean_score, colour = gender)) +
   geom_line()
 ```
@@ -41,7 +41,6 @@ community_belonging %>%
   facet_wrap(~gender)
 ```
 # Neighbourhood rating
-
 ```{r}
 neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv"))
 neighbourhood_rating
@@ -51,7 +50,7 @@ neighbourhood_rating %>%
   filter(area == "Scotland", measurement == "Percent",
          !walking_distance_to_nearest_greenspace %in% c("All", "Don't Know")) %>% 
   group_by(walking_distance_to_nearest_greenspace, year) %>% 
-  summarise(mean_score = mean(neighbourhood_score)) %>% 
+  summarise(mean_score = mean(score)) %>% 
   ggplot(aes(year, mean_score, colour = walking_distance_to_nearest_greenspace)) +
   geom_line()
 ```
@@ -61,7 +60,7 @@ neighbourhood_rating %>%
          !walking_distance_to_nearest_greenspace %in% c("All", "Don't Know"),
          year == 2019) %>% 
   group_by(walking_distance_to_nearest_greenspace) %>% 
-  summarise(mean_score = mean(neighbourhood_score)) %>% 
+  summarise(mean_score = mean(score)) %>% 
   ggplot(aes(walking_distance_to_nearest_greenspace, mean_score)) +
   geom_col()
 ```
@@ -146,8 +145,8 @@ ratings_joined <- neighbourhood_rating_id %>%
             household_type, ethnicity, area,
             walking_distance_to_nearest_greenspace, rating)) %>% 
   full_join(community_belonging_id, by = join_by(id)) %>% 
-  select(id, rating, measurement, community_value, belonging_score,
-         neighbourhood_value, neighbourhood_score, area, year,
+  select(id, rating, measurement, community_value, score,
+         neighbourhood_value, score, area, year,
          gender:walking_distance_to_nearest_greenspace) %>% 
   arrange(area, year, rating)
 ```
@@ -166,8 +165,8 @@ ratings_joined %>%
   filter(area == "Scotland", measurement == "Percent",
          walking_distance_to_nearest_greenspace != "All") %>% 
   group_by(walking_distance_to_nearest_greenspace, year) %>% 
-  summarise(mean_community = mean(belonging_score),
-            mean_neighbourhood = mean(neighbourhood_score)) %>% 
+  summarise(mean_community = mean(score),
+            mean_neighbourhood = mean(score)) %>% 
   ggplot(aes(year, mean_community, colour = walking_distance_to_nearest_greenspace)) +
   geom_line()
 
@@ -175,8 +174,8 @@ ratings_joined %>%
   filter(area == "Scotland", measurement == "Percent",
          walking_distance_to_nearest_greenspace != "All") %>% 
   group_by(walking_distance_to_nearest_greenspace, year) %>% 
-  summarise(mean_community = mean(belonging_score),
-            mean_neighbourhood = mean(neighbourhood_score)) %>% 
+  summarise(mean_community = mean(score),
+            mean_neighbourhood = mean(score)) %>% 
   ggplot(aes(year, mean_neighbourhood, colour = walking_distance_to_nearest_greenspace)) +
   geom_line()
 ```
@@ -202,18 +201,19 @@ neighbour_train <- slice(neighbourhood_rating, -test_index)
 ```{r message=FALSE, warning=FALSE}
 neighbour_train %>% 
   filter(measurement == "Percent") %>% 
-  select(neighbourhood_score, year, gender, urban_rural_classification, simd_quintiles) %>% 
+  select(score, year, gender, urban_rural_classification,
+         simd_quintiles) %>% 
   ggpairs()
 
 neighbour_train %>% 
   filter(measurement == "Percent") %>% 
-  select(neighbourhood_score, walking_distance_to_nearest_greenspace, ethnicity,
+  select(score, walking_distance_to_nearest_greenspace, ethnicity,
          household_type, type_of_tenure) %>% 
   ggpairs()
 ```
 ```{r}
-mod1a <- lm(neighbourhood_score ~ urban_rural_classification, neighbour_train)
-mod1b <- lm(neighbourhood_score ~ simd_quintiles, neighbour_train)
+mod1a <- lm(score ~ urban_rural_classification, neighbour_train)
+mod1b <- lm(score ~ simd_quintiles, neighbour_train)
 
 summary(mod1a)
 summary(mod1b)
@@ -223,9 +223,9 @@ autoplot(mod1a)
 autoplot(mod1b)
 ```
 ```{r}
-mod2a <- lm(neighbourhood_score ~ simd_quintiles + urban_rural_classification,
+mod2a <- lm(score ~ simd_quintiles + urban_rural_classification,
             neighbour_train)
-mod2b <- lm(neighbourhood_score ~ year + gender + urban_rural_classification +
+mod2b <- lm(score ~ year + gender + urban_rural_classification +
               simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
               household_type + type_of_tenure,
             neighbour_train)
@@ -234,10 +234,10 @@ summary(mod2a)
 summary(mod2b)
 ```
 ```{r}
-mod3a <- lm(neighbourhood_score ~ gender + urban_rural_classification +
+mod3a <- lm(score ~ gender + urban_rural_classification +
               simd_quintiles + ethnicity + household_type + type_of_tenure,
             neighbour_train)
-mod3b <- lm(neighbourhood_score ~ gender + urban_rural_classification +
+mod3b <- lm(score ~ gender + urban_rural_classification +
               simd_quintiles + household_type + type_of_tenure,
             neighbour_train)
 
@@ -276,23 +276,23 @@ community_train <- slice(community_belonging, -test_index)
 ```{r message=FALSE, warning=FALSE}
 community_train %>% 
   filter(measurement == "Percent") %>% 
-  select(belonging_score, year, gender, urban_rural_classification, simd_quintiles) %>% 
+  select(score, year, gender, urban_rural_classification, simd_quintiles) %>% 
   ggpairs()
 
 community_train %>% 
   filter(measurement == "Percent") %>% 
-  select(belonging_score, walking_distance_to_nearest_greenspace, ethnicity,
+  select(score, walking_distance_to_nearest_greenspace, ethnicity,
          household_type, type_of_tenure) %>% 
   ggpairs()
 ```
 ```{r}
-mod1a <- lm(belonging_score ~ year + gender + urban_rural_classification +
+mod1a <- lm(score ~ year + gender + urban_rural_classification +
               simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
               household_type + type_of_tenure, community_train)
 summary(mod1a)
 ```
 ```{r}
-mod1b <- lm(belonging_score ~ gender + urban_rural_classification +
+mod1b <- lm(score ~ gender + urban_rural_classification +
               simd_quintiles + walking_distance_to_nearest_greenspace + ethnicity +
               household_type + type_of_tenure, community_train)
 summary(mod1b)
@@ -330,7 +330,7 @@ library(infer)
 ```{r}
 average_community_belonging <- community_belonging %>% 
   filter(measurement == "Percent") %>% 
-  summarise(avg_rating = mean(belonging_score)) %>% 
+  summarise(avg_rating = mean(score)) %>% 
   pull()
 
 average_community_belonging
@@ -340,7 +340,7 @@ average_community_belonging
 community_belonging %>% 
   filter(measurement == "Percent") %>% 
   group_by(type_of_tenure) %>% 
-  summarise(avg_rating = mean(belonging_score),
+  summarise(avg_rating = mean(score),
             overall_avg = average_community_belonging)
 ```
 ### H0: `Owned Mortgage/Loan` and `Owned Outright` have the same mean (and can therefore be grouped)
@@ -350,7 +350,7 @@ vars <- c("Owned Outright", "Owned Mortgage/Loan")
 
 null_dist <- community_belonging %>% 
   filter(type_of_tenure %in% vars) %>% 
-  specify(belonging_score ~ type_of_tenure) %>% 
+  specify(score ~ type_of_tenure) %>% 
   hypothesise(null = "independence") %>% 
   generate(reps = 500, type = "permute") %>% 
   calculate(stat = "diff in means",
@@ -358,7 +358,7 @@ null_dist <- community_belonging %>%
 
 obs_stat <- community_belonging %>% 
   filter(type_of_tenure %in% vars) %>% 
-  specify(belonging_score ~ type_of_tenure) %>% 
+  specify(score ~ type_of_tenure) %>% 
   calculate(stat = "diff in means",
             order = vars)
 ```
@@ -381,8 +381,8 @@ At 95% confidence level I cannot be confident that they are different. I will th
 ```{r}
 null_dist <- community_belonging %>% 
   filter(type_of_tenure == "Owned Outright") %>% 
-  #select(belonging_score) %>% 
-  specify(response = belonging_score) %>% 
+  #select(score) %>% 
+  specify(response = score) %>% 
   hypothesise(null = "point",
               mu = average_community_belonging) %>% 
   generate(reps = 500, type = "bootstrap") %>% 
@@ -390,7 +390,7 @@ null_dist <- community_belonging %>%
 
 obs_stat <- community_belonging %>% 
   filter(type_of_tenure == "Owned Outright") %>%
-  specify(response = belonging_score) %>% 
+  specify(response = score) %>% 
   calculate(stat = "mean")
 ```
 
@@ -407,19 +407,19 @@ null_dist %>%
 
 ```{r}
 null_dist <- community_belonging %>% 
-  select(belonging_score, type_of_tenure) %>% 
+  select(score, type_of_tenure) %>% 
   mutate(owned_outright = (type_of_tenure == "Owned Outright")) %>% 
   select(-type_of_tenure) %>% 
-  specify(belonging_score ~ owned_outright) %>% 
+  specify(score ~ owned_outright) %>% 
   hypothesise(null = "independence") %>% 
   generate(reps = 500, type = "permute") %>% 
   calculate(stat = "diff in means", order = c(TRUE, FALSE))
 
 obs_stat <- community_belonging %>% 
-  select(belonging_score, type_of_tenure) %>% 
+  select(score, type_of_tenure) %>% 
   mutate(owned_outright = (type_of_tenure == "Owned Outright")) %>% 
   select(-type_of_tenure) %>% 
-  specify(belonging_score ~ owned_outright) %>% 
+  specify(score ~ owned_outright) %>% 
   calculate(stat = "diff in means", order = c(TRUE, FALSE))
 ```
 
@@ -439,19 +439,19 @@ null_dist %>%
 
 ```{r}
 null_dist <- community_belonging %>% 
-  select(belonging_score, type_of_tenure) %>% 
+  select(score, type_of_tenure) %>% 
   mutate(owned_mortgage = (type_of_tenure == "Owned Mortgage/Loan")) %>% 
   select(-type_of_tenure) %>% 
-  specify(belonging_score ~ owned_mortgage) %>% 
+  specify(score ~ owned_mortgage) %>% 
   hypothesise(null = "independence") %>% 
   generate(reps = 500, type = "permute") %>% 
   calculate(stat = "diff in means", order = c(TRUE, FALSE))
 
 obs_stat <- community_belonging %>% 
-  select(belonging_score, type_of_tenure) %>% 
+  select(score, type_of_tenure) %>% 
   mutate(owned_mortgage = (type_of_tenure == "Owned Mortgage/Loan")) %>% 
   select(-type_of_tenure) %>% 
-  specify(belonging_score ~ owned_mortgage) %>% 
+  specify(score ~ owned_mortgage) %>% 
   calculate(stat = "diff in means", order = c(TRUE, FALSE))
 ```
 
@@ -471,19 +471,19 @@ null_dist %>%
 
 ```{r}
 null_dist <- community_belonging %>% 
-  select(belonging_score, type_of_tenure) %>% 
+  select(score, type_of_tenure) %>% 
   mutate(rented = (type_of_tenure == "Private Rented")) %>% 
   select(-type_of_tenure) %>% 
-  specify(belonging_score ~ rented) %>% 
+  specify(score ~ rented) %>% 
   hypothesise(null = "independence") %>% 
   generate(reps = 500, type = "permute") %>% 
   calculate(stat = "diff in means", order = c(TRUE, FALSE))
 
 obs_stat <- community_belonging %>% 
-  select(belonging_score, type_of_tenure) %>% 
+  select(score, type_of_tenure) %>% 
   mutate(rented = (type_of_tenure == "Private Rented")) %>% 
   select(-type_of_tenure) %>% 
-  specify(belonging_score ~ rented) %>% 
+  specify(score ~ rented) %>% 
   calculate(stat = "diff in means", order = c(TRUE, FALSE))
 ```
 
