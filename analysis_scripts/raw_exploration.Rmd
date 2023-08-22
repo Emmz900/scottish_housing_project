@@ -33,6 +33,16 @@ community_belonging %>%
 ```
 There is only 1 value in this column. It can be removed in the cleaning script
 
+```{r}
+community_belonging %>% 
+  distinct() %>% 
+  nrow()
+
+community_belonging %>% 
+  nrow()
+```
+No duplicates
+
 ## What is the granularity of the data? 
 ```{r}
 community_belonging %>% 
@@ -255,6 +265,19 @@ green_spaces %>%
   geom_line()
 ```
 # Neighbourhood Rating
+
+```{r}
+neighbourhood_rating
+```
+```{r}
+neighbourhood_rating %>% 
+  distinct() %>% 
+  nrow()
+
+neighbourhood_rating %>% 
+  nrow()
+```
+
 
 ```{r}
 neighbourhood_rating %>% 

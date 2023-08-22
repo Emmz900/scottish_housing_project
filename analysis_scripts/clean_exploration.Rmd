@@ -80,28 +80,71 @@ neighbourhood_rating
 ```
 ```{r}
 neighbourhood_rating_id <- neighbourhood_rating %>% 
+  mutate(rating = case_when(
+    neighbourhood_rating == "Very good" ~ 5,
+    neighbourhood_rating == "Fairly good" ~ 4,
+    neighbourhood_rating == "No opinion" ~ 3,
+    neighbourhood_rating == "Fairly poor" ~ 2,
+    neighbourhood_rating == "Very poor" ~ 1
+  ),
+  measurement = case_when(
+    str_detect(measurement, "Lower") ~ "Lower",
+    str_detect(measurement, "Upper") ~ "Upper",
+    .default = "Percent"
+  )) %>% 
   rowwise() %>% 
-  mutate(id = str_c(feature_code, year, measurement, gender,
-                  urban_rural_classification, simd_quintiles, type_of_tenure,
-                  household_type, ethnicity, walking_distance_to_nearest_greenspace),
-         neighbourhood_rating = case_when(
-           
-         ))
+  mutate(
+    id = str_c(feature_code, year, measurement, gender,
+             urban_rural_classification, simd_quintiles, type_of_tenure,
+             household_type, ethnicity,
+             walking_distance_to_nearest_greenspace, rating)
+  ) %>% 
+  ungroup() %>% 
+  select(-neighbourhood_rating) %>% 
+  rename("neighbourhood_value" = value) 
 
 community_belonging_id <- community_belonging %>% 
+  mutate(rating = case_when(
+    community_belonging == "Not at all strongly" ~ 1,
+    community_belonging == "Not very strongly" ~ 2,
+    community_belonging == "Don't know" ~ 3,
+    community_belonging == "Fairly strongly" ~ 4,
+    community_belonging == "Very strongly" ~ 5
+  ),
+  measurement = case_when(
+    str_detect(measurement, "Lower") ~ "Lower",
+    str_detect(measurement, "Upper") ~ "Upper",
+    .default = "Percent"
+  )) %>% 
   rowwise() %>% 
-  mutate(id = str_c(feature_code, year, measurement, gender,
-                  urban_rural_classification, simd_quintiles, type_of_tenure,
-                  household_type, ethnicity, walking_distance_to_nearest_greenspace))
-# need to convert ratings into matching categories (1:5?)
-neighbourhood_rating_id %>% 
-  select(-c(feature_code, year, measurement, gender,
-                  urban_rural_classification, simd_quintiles, type_of_tenure,
-                  household_type, ethnicity, area, walking_distance_to_nearest_greenspace)) %>% 
-  rename("neighbourhood_value" = value) %>% 
-  full_join(community_belonging_id, by = join_by(id))
+  mutate(
+    id = str_c(feature_code, year, measurement, gender,
+             urban_rural_classification, simd_quintiles, type_of_tenure,
+             household_type, ethnicity,
+             walking_distance_to_nearest_greenspace, rating)
+  ) %>% 
+  ungroup() %>% 
+  select(-community_belonging) %>% 
+  rename("community_value" = value)
 ```
 
+```{r}
+ratings_joined <- neighbourhood_rating_id %>% 
+  select(-c(feature_code, year, measurement, gender,
+            urban_rural_classification, simd_quintiles, type_of_tenure,
+            household_type, ethnicity, area,
+            walking_distance_to_nearest_greenspace, rating)) %>% 
+  full_join(community_belonging_id, by = join_by(id)) %>% 
+  select(rating, measurement, community_value, belonging_score,
+         neighbourhood_value, neighbourhood_score, area, year,
+         gender:walking_distance_to_nearest_greenspace)
+```
+
+```{r}
+neighbourhood_rating %>% 
+  distinct()
+neighbourhood_rating
+```
 
 
 
