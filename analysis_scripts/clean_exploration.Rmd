@@ -83,7 +83,10 @@ neighbourhood_rating_id <- neighbourhood_rating %>%
   rowwise() %>% 
   mutate(id = str_c(feature_code, year, measurement, gender,
                   urban_rural_classification, simd_quintiles, type_of_tenure,
-                  household_type, ethnicity, walking_distance_to_nearest_greenspace))
+                  household_type, ethnicity, walking_distance_to_nearest_greenspace),
+         neighbourhood_rating = case_when(
+           
+         ))
 
 community_belonging_id <- community_belonging %>% 
   rowwise() %>% 
