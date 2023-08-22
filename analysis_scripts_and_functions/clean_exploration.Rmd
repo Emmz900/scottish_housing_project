@@ -587,3 +587,47 @@ test_diff_in_means(community_belonging, type_of_tenure, "Owned Outright")
 visualise_diff_in_means(community_belonging, type_of_tenure, "Owned Outright")
 ```
 
+# Visualisation of 2019 data for introduction
+```{r}
+create_2019_community_graph <- function(category){
+  community_belonging %>% 
+  filter(area == "Scotland", measurement == "Percent", {{category}} != "All",
+         year == "2019") %>% 
+  select({{category}}, community_belonging, value) %>% 
+  ggplot(aes(community_belonging, value, fill = {{category}})) +
+  geom_col(position = "dodge") +
+  geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+  #facet_wrap(~{{category}}) +
+  scale_y_continuous(limits = c(0, 50)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 16)) +
+  labs(
+    title = "Community Belonging in 2019",
+    x = "Community Belonging",
+    y = "Percentage of survey responses",
+    fill = "Classification"
+  ) #+
+  #scale_fill_manual(values = c("Rural" = "darkgreen", "Urban" = "darkgrey"))
+}
+```
+
+```{r}
+categories <- c("ethnicity", "type_of_tenure", "simd_quintiles", "household_type",
+                "urban_rural_classification", "gender", "walking_distance_to_nearest_greenspace")
+
+create_2019_community_graph(ethnicity)
+create_2019_community_graph(type_of_tenure)
+create_2019_community_graph(simd_quintiles)
+create_2019_community_graph(household_type)
+create_2019_community_graph(urban_rural_classification)
+create_2019_community_graph(gender)
+create_2019_community_graph(walking_distance_to_nearest_greenspace)
+```
+
+```{r}
+
+```
+

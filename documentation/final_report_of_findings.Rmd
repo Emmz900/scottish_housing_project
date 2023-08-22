@@ -55,13 +55,13 @@ Don't know {Spontaneous]
 
 ```{r}
 community_belonging %>% 
-  filter(area == "Scotland", measurement == "Percent", urban_rural_classification != "All",
+  filter(area == "Scotland", measurement == "Percent", simd_quintiles != "All",
          year == "2019") %>% 
-  select(year, urban_rural_classification, community_belonging, value) %>% 
-  ggplot(aes(community_belonging, value, fill = urban_rural_classification)) +
-  geom_col(position = "dodge", show.legend = FALSE) +
-  geom_text(aes(label = paste(value, "%")), vjust = -1) +
-  facet_wrap(~urban_rural_classification) +
+  select(year, simd_quintiles, community_belonging, value) %>% 
+  ggplot(aes(community_belonging, value, fill = simd_quintiles)) +
+  geom_col(position = "dodge") +
+  geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+  #facet_wrap(~simd_quintiles) +
   scale_y_continuous(limits = c(0, 50)) +
   #theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
@@ -70,12 +70,36 @@ community_belonging %>%
         panel.background = element_blank(),
         text = element_text(size = 16)) +
   labs(
-    title = "2019 Community Belonging in Rural and Urban Areas",
+    title = "Community Belonging by SIMD Quintile in 2019",
     x = "Community Belonging",
     y = "Percentage of survey responses"
-  )
+  ) +
+  scale_fill_manual(values = c("20% most deprived" = "tomato2", "80% least deprived" = "lightgreen"))
 ```
-
+```{r}
+community_belonging %>% 
+  filter(area == "Scotland", measurement == "Percent", urban_rural_classification != "All",
+         year == "2019") %>% 
+  select(year, urban_rural_classification, community_belonging, value) %>% 
+  ggplot(aes(community_belonging, value, fill = urban_rural_classification)) +
+  geom_col(position = "dodge") +
+  geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+  #facet_wrap(~urban_rural_classification) +
+  scale_y_continuous(limits = c(0, 50)) +
+  #theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 16)) +
+  labs(
+    title = "Community Belonging in Rural and Urban Areas in 2019",
+    x = "Community Belonging",
+    y = "Percentage of survey responses",
+    fill = "Classification"
+  ) +
+  scale_fill_manual(values = c("Rural" = "darkgreen", "Urban" = "darkgrey"))
+```
 
 # Data Cleaning and Exploration
 
