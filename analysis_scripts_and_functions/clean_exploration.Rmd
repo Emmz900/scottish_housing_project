@@ -44,11 +44,11 @@ community_belonging %>%
 ```{r}
 neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>% 
   mutate(neighbourhood_rating = factor(neighbourhood_rating, 
-                                      levels = c("Very poor", 
-                                                 "Fairly poor",
-                                                 "No opinion",
-                                                 "Fairly good",
-                                                 "Very good"))
+                                       levels = c("Very poor", 
+                                                  "Fairly poor",
+                                                  "No opinion",
+                                                  "Fairly good",
+                                                  "Very good"))
   )
 neighbourhood_rating
 ```
@@ -598,25 +598,25 @@ visualise_diff_in_means(community_belonging, type_of_tenure, "Owned Outright")
 ```{r}
 create_2019_community_graph <- function(category){
   community_belonging %>% 
-  filter(area == "Scotland", measurement == "Percent", {{category}} != "All",
-         year == "2019") %>% 
-  select({{category}}, community_belonging, value) %>% 
-  ggplot(aes(community_belonging, value, fill = {{category}})) +
-  geom_col(position = "dodge") +
-  geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
-  #facet_wrap(~{{category}}) +
-  scale_y_continuous(limits = c(0, 50)) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        text = element_text(size = 16)) +
-  labs(
-    title = "Community Belonging in 2019",
-    x = "Community Belonging",
-    y = "Percentage of survey responses",
-    fill = "Classification"
-  ) #+
+    filter(area == "Scotland", measurement == "Percent", {{category}} != "All",
+           year == "2019") %>% 
+    select({{category}}, community_belonging, value) %>% 
+    ggplot(aes(community_belonging, value, fill = {{category}})) +
+    geom_col(position = "dodge") +
+    geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+    #facet_wrap(~{{category}}) +
+    scale_y_continuous(limits = c(0, 50)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          text = element_text(size = 16)) +
+    labs(
+      title = "Community Belonging in 2019",
+      x = "Community Belonging",
+      y = "Percentage of survey responses",
+      fill = "Classification"
+    ) #+
   #scale_fill_manual(values = c("Rural" = "darkgreen", "Urban" = "darkgrey"))
 }
 ```
@@ -637,32 +637,32 @@ create_2019_community_graph(walking_distance_to_nearest_greenspace)
 ```{r}
 create_2019_neighbourhood_graph <- function(category){
   neighbourhood_rating %>% 
-  filter(area == "Scotland", measurement == "Percent", {{category}} != "All",
-         year == "2019") %>% 
-  select({{category}}, neighbourhood_rating, value) %>% 
-  ggplot(aes(neighbourhood_rating, value, fill = {{category}})) +
-  geom_col(position = "dodge") +
-  geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
-  #facet_wrap(~{{category}}) +
-  scale_y_continuous(limits = c(0, 100)) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        text = element_text(size = 16)) +
-  labs(
-    title = "Neighbourhood Rating in 2019",
-    x = "Neighbourhood Rating",
-    y = "Percentage of survey responses",
-    fill = "Classification"
-  ) #+
+    filter(area == "Scotland", measurement == "Percent", {{category}} != "All",
+           year == "2019") %>% 
+    select({{category}}, neighbourhood_rating, value) %>% 
+    ggplot(aes(neighbourhood_rating, value, fill = {{category}})) +
+    geom_col(position = "dodge") +
+    geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+    scale_y_continuous(limits = c(0, 100)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          text = element_text(size = 16)) +
+    labs(
+      title = "Neighbourhood Rating in 2019",
+      x = "Neighbourhood Rating",
+      y = "Percentage of survey responses",
+      fill = str_wrap(str_to_title(str_replace_all(deparse(substitute(category)),
+                                                   "_", " ")), 20)
+    ) #+
   #scale_fill_manual(values = c("Rural" = "darkgreen", "Urban" = "darkgrey"))
 }
 ```
 
 ```{r}
 #categories <- c("ethnicity", "type_of_tenure", "simd_quintiles", "household_type",
-               # "urban_rural_classification", "gender", "walking_distance_to_nearest_greenspace")
+# "urban_rural_classification", "gender", "walking_distance_to_nearest_greenspace")
 
 create_2019_neighbourhood_graph(ethnicity)
 create_2019_neighbourhood_graph(type_of_tenure)
@@ -691,7 +691,9 @@ neighbourhood_rating %>%
     title = "Neighbourhood Rating in 2019",
     x = "Neighbourhood Rating",
     y = "Percentage of survey responses",
-    fill = "Classification"
+    fill = deparse(substitute(category))
   )
 ```
+
+
 

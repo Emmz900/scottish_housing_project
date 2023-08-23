@@ -13,9 +13,9 @@ neighbourhood_rating_joined <- neighbourhood_rating %>%
 neighbourhood_rating_clean <- neighbourhood_rating_joined %>% 
   # factor neighbourhood_rating column
   mutate(neighbourhood_rating = factor(neighbourhood_rating, 
-                                      levels = c("Very poor", 
+                                      levels = c("No opinion",
+                                                 "Very poor", 
                                                  "Fairly poor",
-                                                 "No opinion",
                                                  "Fairly good",
                                                  "Very good"))
   ) %>% 
@@ -24,7 +24,7 @@ neighbourhood_rating_clean <- neighbourhood_rating_joined %>%
   mutate(score = case_when(
     neighbourhood_rating == "Very poor" ~ value/100 * 1,
     neighbourhood_rating == "Fairly poor" ~ value/100 * 2,
-    neighbourhood_rating == "No opinion" ~ 3,
+    neighbourhood_rating == "No opinion" ~ value/100 * 3,
     neighbourhood_rating == "Fairly good" ~ value/100 * 4,
     neighbourhood_rating == "Very good" ~ value/100 * 5
   )) %>% 
