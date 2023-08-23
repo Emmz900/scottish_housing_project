@@ -75,7 +75,7 @@ council_areas_clean <- council_areas %>%
   select(ca, ca_name) %>% 
   add_row(ca = "S92000003" ,ca_name = "Scotland")
 ```
-Some rows appear to be for the whole of scotland so I have added a row for this code.
+Some rows appear to be for the whole of Scotland so I have added a row for this code.
 
 ```{r}
 community_belonging <- community_belonging %>% 
@@ -131,7 +131,7 @@ Walking distance to nearest greenspace is likely self reported, only 2% of peopl
 community_belonging %>% 
   filter(date_code == 2019,
          gender == "Female",
-         ca_name == "East Lothian") %>% 
+         ca_name == "Scotland") %>% 
   select(measurement:community_belonging) %>% 
   pivot_wider(names_from = measurement, values_from = value) %>% 
   clean_names() %>% 

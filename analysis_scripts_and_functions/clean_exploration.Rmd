@@ -698,4 +698,49 @@ neighbourhood_rating %>%
 ```
 
 
+```{r}
+neighbourhood_rating %>% 
+  filter(gender != "All", area == "Scotland", measurement == "Percent", year == 2019) %>% 
+  
+```
+
+# Area exploration
+```{r}
+area_ratings <- neighbourhood_rating %>% 
+  filter(measurement == "Percent", gender != "All") %>% 
+  group_by(area, year, gender) %>% 
+  summarise(total_score = sum(score)) %>% 
+  ungroup()
+```
+```{r}
+area_ratings <- area_ratings %>% 
+  group_by(area, year) %>% 
+  summarise(avg_score = mean(total_score))
+```
+```{r}
+area_ratings
+```
+
+## For each year what was the highest rated area?
+```{r}
+area_ratings %>% 
+  group_by(year) %>% 
+  slice_max(avg_score, n = 5) %>% 
+  ggplot(aes(year, avg_score, fill = area)) +
+  geom_col(position = "dodge", show.legend = FALSE) +
+  geom_text(aes(label = area, y = 0), position = position_dodge(0.9),
+            hjust = "left", size = 3) +
+  scale_x_continuous(breaks = seq(2013, 2019, 1)) +
+  coord_flip()
+```
+
+## Difference in each area since 2013?
+```{r}
+area_ratings %>% 
+  filter(year %in% c(2013, 2019)) %>% 
+  group_by(area) %>% 
+  summarise(diff = diff(avg_score)) %>%
+  arrange(diff) %>% 
+  tail(10)
+```
 

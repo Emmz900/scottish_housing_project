@@ -22,11 +22,11 @@ community_belonging_clean <- community_belonging_joined %>%
   
   # it will be useful to have a community belonging score for each row (percentage x rating)
   mutate(score = case_when(
-    community_belonging == "Not at all strongly" ~ value/100 * 1,
-    community_belonging == "Not very strongly" ~ value/100 * 2,
-    community_belonging == "Don't know" ~ value/100 * 3,
-    community_belonging == "Fairly strongly" ~ value/100 * 4,
-    community_belonging == "Very strongly" ~ value/100 * 5
+    community_belonging == "Not at all strongly" ~ value/100 * -1,
+    community_belonging == "Not very strongly" ~ value/100 * -0.5,
+    community_belonging == "Don't know" ~ value/100 * 0,
+    community_belonging == "Fairly strongly" ~ value/100 * 0.5,
+    community_belonging == "Very strongly" ~ value/100 * 1
   )) %>% 
   
   # the units are all "Percent Of Adults" therefore `units` is not a necessary column

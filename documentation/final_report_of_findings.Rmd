@@ -18,17 +18,17 @@ library(GGally)
 ```{r}
 community_belonging <- read_csv(here("clean_data/community_belonging.csv")) %>% 
   mutate(community_belonging = factor(community_belonging, 
-                                      levels = c("Don't know",
-                                                 "Not at all strongly", 
+                                      levels = c("Not at all strongly", 
                                                  "Not very strongly",
+                                                 "Don't know",
                                                  "Fairly strongly",
                                                  "Very strongly")))
 
 neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>% 
   mutate(neighbourhood_rating = factor(neighbourhood_rating, 
-                                      levels = c("No opinion",
-                                                 "Very poor", 
+                                      levels = c("Very poor", 
                                                  "Fairly poor",
+                                                 "No opinion",
                                                  "Fairly good",
                                                  "Very good")))
 ```
@@ -62,9 +62,25 @@ Since the data collected in the survey contains sensitive information, the data 
 
 # 2. Data Cleaning and Exploration
 
-* scoring system
-* aggregation
-* ethics
+To aid analysis each row of the data was given a score based on the percentage of people that gave that rating, and the rating itself coded with the following values:
+
+**Neighbourhood Rating** 
+- "Very poor"               1
+- "Fairly poor"             2
+- "No opinion"              3
+- "Fairly good"             4
+- "Very good"               5
+
+**Community Belonging**
+- "Not at all strongly"     1
+- "Not very strongly"       2
+- "Don't know"              3
+- "Fairly strongly"         4
+- "Very strongly"           5
+
+## Exploration
+
+A shiny app was created to help explore the data in an interactive way. This will be referred to here and can be found within the `explanatory_app` folder of this repository.
 
 # 3. Does access to greenspace impact neighbourhood ratings or community belonging?
 
@@ -91,22 +107,68 @@ The percentages indicate the percentage of people from the given group which res
 ```{r}
 create_2019_graph_neighbourhood(walking_distance_to_nearest_greenspace)
 ```
+Generally people rated their neighbourhood fairly highly. At least 50% of people in each group rated their neighbourhood as "Very good".
 
-The percentages are fairly similar across all responses suggesting that access to greenspace does not have a significant effect on neighbourhood ratings. There are some small differences however, those that had access to green space within less than 10 minutes of walking appear to be slightly more likely to rate their neighbourhood "Very good" compared to the other groups. People who do not know how close their nearest greenspace is were more liekly than the other groups to have no opinion on the neighbourhood, or rate it "Fairly poor".
+Those that had access to green space within less than 10 minutes of walking appear to be slightly more likely to rate their neighbourhood "Very good" compared to the other groups. People who do not know how close their nearest greenspace is were more likely than the other groups to have no opinion on the neighbourhood, or rate it "Fairly poor". This pattern is fairly consistent across the years analysed.
 
-This means.....
+```{r}
+neighbourhood_rating %>% 
+      filter(area == "Scotland", measurement == "Percent",
+             walking_distance_to_nearest_greenspace != "All") %>% 
+      summarise(total_score = sum(score),
+                .by = c(year, walking_distance_to_nearest_greenspace)) %>% 
+      ggplot(aes(year, total_score, colour = walking_distance_to_nearest_greenspace)) +
+      geom_line() +
+      geom_point() +
+      scale_x_continuous(breaks = seq(2013, 2019, 1)) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            text = element_text(size = 16)) +
+      labs(
+        title = "Neighbourhood Rating Score",
+        x = "Year",
+        y = "Total Score (-1 to 1)",
+        colour = "Walking Distance To\nNearest Greenspace"
+      )
+```
+
+_This means....._
 
 ## Community Belonging
 
-HOW STRONGLY DO YOU FEEL YOU BELONG TO YOUR IMMEDIATE
-NEIGHBOURHOOD?
-(1) Very strongly
-(2) Fairly strongly
-(3) Not very strongly
-(4) Not at all strongly
-Don't know {Spontaneous] 
+The question asked by the survey is as follows:
+>"HOW STRONGLY DO YOU FEEL YOU BELONG TO YOUR IMMEDIATE
+NEIGHBOURHOOD?"
+
+The options given for the response were:
+>"(1) Very strongly
+  (2) Fairly strongly
+  (3) Not very strongly
+  (4) Not at all strongly
+  Don't know Spontaneous"
 
 ```{r}
 create_2019_graph_community(walking_distance_to_nearest_greenspace)
+```
+_This means..._
+
+## Conclusions
+
+* Those who did not know how far to their nearest greenspace tended to rate their feelings of community belonging lower. 
+* Those with a greenspace within 10 minutes walking tended to rate their neighbourhoods, and feeling of community belonging slightly higher than those that didn't. 
+* Increasing access to greenspace may help to increase neighbourhood ratings and community belonging.
+
+# Which other individual factors influence neighbourhood ratings and community belonging?
+
+## Type of Tenure
+
+```{r}
+create_2019_graph_neighbourhood(type_of_tenure)
+```
+
+```{r}
+create_2019_graph_community(type_of_tenure)
 ```
 

@@ -1,6 +1,6 @@
 test_diff_in_means <- function(data, column, category, n_reps = 500){
   null_dist <- data %>% 
-    filter({{column}} %in% c("All", category)) %>% 
+    filter({{column}} != "All") %>% 
     mutate(test = ({{column}} == category)) %>% 
     specify(score ~ test) %>% 
     hypothesise(null = "independence") %>% 
@@ -8,7 +8,7 @@ test_diff_in_means <- function(data, column, category, n_reps = 500){
     calculate(stat = "diff in means", order = c(TRUE, FALSE))
   
   obs_stat <- data %>% 
-    filter({{column}} %in% c("All", category)) %>% 
+    filter({{column}} != "All") %>% 
     mutate(test = ({{column}} == category)) %>% 
     specify(score ~ test) %>%  
     calculate(stat = "diff in means", order = c(TRUE, FALSE))
