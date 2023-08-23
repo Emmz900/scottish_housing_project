@@ -6,7 +6,7 @@ create_2019_graph_community <- function(category){
     select({{category}}, community_belonging, value) %>% 
     ggplot(aes(community_belonging, value, fill = {{category}})) +
     geom_col(position = "dodge") +
-    geom_text(aes(label = paste(value, "%")), vjust = -1,
+    geom_text(aes(label = paste(value, "%", sep = "")), vjust = -1,
               position = position_dodge(0.9), size = 3) +
     scale_y_continuous(limits = c(0, 50)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
@@ -37,7 +37,7 @@ create_2019_graph_neighbourhood <- function(category){
     select({{category}}, neighbourhood_rating, value) %>% 
     ggplot(aes(neighbourhood_rating, value, fill = {{category}})) +
     geom_col(position = "dodge") +
-    geom_text(aes(label = paste(value, "%")), vjust = -1,
+    geom_text(aes(label = paste(value, "%", sep = "")), vjust = -1,
               position = position_dodge(0.9), size = 3) +
     scale_y_continuous(limits = c(0, 100)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),

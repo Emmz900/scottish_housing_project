@@ -478,6 +478,7 @@ null_dist %>%
 
 ```{r}
 null_dist <- community_belonging %>% 
+  filter(type_of_tenure != "All") %>% 
   select(score, type_of_tenure) %>% 
   mutate(rented = (type_of_tenure == "Private Rented")) %>% 
   select(-type_of_tenure) %>% 
@@ -486,7 +487,8 @@ null_dist <- community_belonging %>%
   generate(reps = 500, type = "permute") %>% 
   calculate(stat = "diff in means", order = c(TRUE, FALSE))
 
-obs_stat <- community_belonging %>% 
+obs_stat <- community_belonging %>%
+  filter(type_of_tenure != "All") %>% 
   select(score, type_of_tenure) %>% 
   mutate(rented = (type_of_tenure == "Private Rented")) %>% 
   select(-type_of_tenure) %>% 
