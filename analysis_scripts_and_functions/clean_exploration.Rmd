@@ -25,8 +25,8 @@ community_belonging %>%
   filter(area == "Scotland", measurement == "Percent",
          gender != "All") %>% 
   group_by(gender, year) %>% 
-  summarise(mean_score = mean(score)) %>% 
-  ggplot(aes(year, mean_score, colour = gender)) +
+  summarise(total_score = sum(score), total = n()) %>% 
+  ggplot(aes(year, total_score, colour = gender)) +
   geom_line()
 ```
 
@@ -54,11 +54,17 @@ neighbourhood_rating
 ```
 ```{r}
 neighbourhood_rating %>% 
+  filter(area == "Scotland", measurement == "Percent", gender != "All")
+```
+
+
+```{r}
+neighbourhood_rating %>% 
   filter(area == "Scotland", measurement == "Percent",
          !walking_distance_to_nearest_greenspace %in% c("All", "Don't Know")) %>% 
   group_by(walking_distance_to_nearest_greenspace, year) %>% 
-  summarise(mean_score = mean(score)) %>% 
-  ggplot(aes(year, mean_score, colour = walking_distance_to_nearest_greenspace)) +
+  summarise(total_score = sum(score)) %>% 
+  ggplot(aes(year, total_score, colour = walking_distance_to_nearest_greenspace)) +
   geom_line()
 ```
 ```{r}
@@ -67,8 +73,8 @@ neighbourhood_rating %>%
          !walking_distance_to_nearest_greenspace %in% c("All", "Don't Know"),
          year == 2019) %>% 
   group_by(walking_distance_to_nearest_greenspace) %>% 
-  summarise(mean_score = mean(score)) %>% 
-  ggplot(aes(walking_distance_to_nearest_greenspace, mean_score)) +
+  summarise(total_score = sum(score)) %>% 
+  ggplot(aes(walking_distance_to_nearest_greenspace, total_score)) +
   geom_col()
 ```
 
@@ -82,11 +88,11 @@ neighbourhood_rating %>%
 (102/(3708+915))*100
 ```
 # Join the data?
-```{r}
+```{r eval=FALSE}
 community_belonging
 neighbourhood_rating
 ```
-```{r}
+```{r eval=FALSE}
 neighbourhood_rating_id <- neighbourhood_rating %>% 
   mutate(rating = case_when(
     neighbourhood_rating == "Very good" ~ 5,
@@ -136,7 +142,7 @@ community_belonging_id <- community_belonging %>%
   rename("community_value" = value)
 ```
 
-```{r}
+```{r eval=FALSE}
 community_belonging_id %>% 
   summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
 
@@ -145,7 +151,7 @@ neighbourhood_rating_id %>%
 
 ```
 
-```{r}
+```{r eval=FALSE}
 ratings_joined <- neighbourhood_rating_id %>% 
   select(-c(feature_code, year, measurement, gender,
             urban_rural_classification, simd_quintiles, type_of_tenure,
@@ -161,13 +167,13 @@ ratings_joined <- neighbourhood_rating_id %>%
 The missing values seen in the raw analysis are now causing issues.
 It will be easier to do the analysis on the datasets separately. 
 
-```{r}
+```{r eval-FALSE}
 community_belonging_id %>% 
   filter(feature_code == "S12000036", year == "2016", measurement == "Lower", rating == 3)
 ```
 
 
-```{r}
+```{r eval=FALSE}
 ratings_joined %>% 
   filter(area == "Scotland", measurement == "Percent",
          walking_distance_to_nearest_greenspace != "All") %>% 
@@ -195,6 +201,35 @@ library(GGally)
 library(rpart)
 library(rpart.plot)
 ```
+
+## Aggregated modelling
+```{r}
+aggregated_ratings <- neighbourhood_rating %>% 
+  filter(measurement == "Percent", area == "Scotland") %>% 
+  group_by(year, gender, urban_rural_classification, 
+           simd_quintiles, type_of_tenure, household_type,
+           ethnicity, walking_distance_to_nearest_greenspace) %>% 
+  summarise(score = sum(score))
+```
+```{r}
+lm(score ~ ., aggregated_ratings) %>% 
+  summary()
+```
+```{r}
+aggregated_ratings_gender <- aggregated_ratings %>% 
+  filter(gender != "All") 
+
+lm(score ~ gender, aggregated_ratings_gender) %>% 
+  summary()
+```
+```{r}
+aggregated_ratings_rural <- aggregated_ratings %>% 
+  filter(urban_rural_classification != "All") 
+aggregated_ratings_rural
+lm(score ~ urban_rural_classification, aggregated_ratings_rural) %>% 
+  summary()
+```
+
 ```{r}
 n_data <- nrow(neighbourhood_rating)
 test_prop <- 0.2
@@ -218,6 +253,8 @@ neighbour_train %>%
          household_type, type_of_tenure) %>% 
   ggpairs()
 ```
+
+# Non-aggregated modelling
 ```{r}
 mod1a <- lm(score ~ urban_rural_classification, neighbour_train)
 mod1b <- lm(score ~ simd_quintiles, neighbour_train)
@@ -241,6 +278,10 @@ summary(mod2a)
 summary(mod2b)
 ```
 ```{r}
+autoplot(mod2b)
+```
+
+```{r}
 mod3a <- lm(score ~ gender + urban_rural_classification +
               simd_quintiles + ethnicity + household_type + type_of_tenure,
             neighbour_train)
@@ -251,6 +292,11 @@ mod3b <- lm(score ~ gender + urban_rural_classification +
 summary(mod3a)
 summary(mod3b)
 ```
+
+```{r}
+autoplot(mod3b)
+```
+
 ### Conclusions
 
 * Important factors are:
@@ -701,24 +747,30 @@ neighbourhood_rating %>%
 ```{r}
 neighbourhood_rating %>% 
   filter(gender != "All", area == "Scotland", measurement == "Percent", year == 2019) %>% 
-  
 ```
 
 # Area exploration
 ```{r}
 area_ratings <- neighbourhood_rating %>% 
   filter(measurement == "Percent", gender != "All") %>% 
-  group_by(area, year, gender) %>% 
+  group_by(feature_code, area, year, gender) %>% 
   summarise(total_score = sum(score)) %>% 
   ungroup()
 ```
 ```{r}
-area_ratings <- area_ratings %>% 
-  group_by(area, year) %>% 
+area_ratings_year <- area_ratings %>% 
+  group_by(feature_code, area, year) %>% 
   summarise(avg_score = mean(total_score))
 ```
 ```{r}
-area_ratings
+area_ratings_year
+```
+
+```{r}
+area_ratings_all <- area_ratings %>% 
+  group_by(feature_code) %>% 
+  summarise(score = mean(total_score))
+area_ratings_all
 ```
 
 ## For each year what was the highest rated area?
@@ -736,11 +788,54 @@ area_ratings %>%
 
 ## Difference in each area since 2013?
 ```{r}
-area_ratings %>% 
+change_in_score <- area_ratings_year %>% 
   filter(year %in% c(2013, 2019)) %>% 
-  group_by(area) %>% 
+  group_by(feature_code) %>% 
   summarise(diff = diff(avg_score)) %>%
-  arrange(diff) %>% 
-  tail(10)
+  arrange(diff)
+
+change_in_score
 ```
+
+```{r}
+library(sf)
+```
+
+[Data source:](https://data.spatialhub.scot/dataset/local_authority_boundaries-is/resource/d24c5735-0f1c-4819-a6bd-dbfeb93bd8e4)
+```{r}
+uk_boundaries <- st_read(
+  dsn = here("clean_data/map_data/"),
+             layer = "pub_las")
+```
+```{r}
+plot(uk_boundaries)
+```
+
+```{r}
+names(uk_boundaries)
+```
+```{r}
+head(uk_boundaries)
+```
+
+```{r}
+joined_areas <- uk_boundaries %>% 
+  #select(CODE, geometry) %>% 
+  inner_join(area_ratings_all, by = join_by(code == feature_code))
+```
+
+```{r}
+joined_areas
+```
+```{r}
+plot(joined_areas[4])
+```
+```{r}
+ggplot(joined_areas, aes(fill = score)) +
+  geom_sf() +
+  scale_fill_distiller(palette = "3-class Greens", direction = 1) +
+  theme_minimal() +
+  theme(axis.text = element_blank())
+```
+
 

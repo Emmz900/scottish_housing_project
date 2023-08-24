@@ -140,13 +140,12 @@ server <- function(input, output, session) {
     community_belonging %>% 
       filter(area == input$area_input_c, measurement == "Percent",
              get(input$variable_input_c) != "All") %>% 
-      summarise(mean_score = mean(score),
+      summarise(total_score = sum(score),
                 .by = c(year, input$variable_input_c)) %>% 
-      ggplot(aes(year, mean_score, colour = get(input$variable_input_c))) +
+      ggplot(aes(year, total_score, colour = get(input$variable_input_c))) +
       geom_line() +
       geom_point() +
       scale_x_continuous(breaks = seq(2013, 2019, 1)) +
-      #scale_y_continuous(limits = c(0, 5)) +
       geom_vline(xintercept = input$year_input_c,
                  colour = "black", alpha = 0.5) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),

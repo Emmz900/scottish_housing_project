@@ -82,6 +82,21 @@ To aid analysis each row of the data was given a score based on the percentage o
 
 A shiny app was created to help explore the data in an interactive way. This will be referred to here and can be found within the `explanatory_app` folder of this repository.
 
+
+```{r}
+spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv"))
+spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
+```
+```{r}
+spatial_neighbourhood %>% 
+  filter(urban_rural_classification != "All") %>% 
+  group_by(feature_code, year) %>% 
+  summarise(score = mean(score)) %>% 
+  ggplot(aes(fill = score)) +
+  geom_sf()
+```
+
+
 # 3. Does access to greenspace impact neighbourhood ratings or community belonging?
 
 ## Neighbourhood rating
@@ -160,7 +175,7 @@ _This means..._
 * Those with a greenspace within 10 minutes walking tended to rate their neighbourhoods, and feeling of community belonging slightly higher than those that didn't. 
 * Increasing access to greenspace may help to increase neighbourhood ratings and community belonging.
 
-# Which other individual factors influence neighbourhood ratings and community belonging?
+# 4. Which other factors influence neighbourhood ratings and community belonging?
 
 ## Type of Tenure
 
