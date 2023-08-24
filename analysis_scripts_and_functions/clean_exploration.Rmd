@@ -837,5 +837,70 @@ ggplot(joined_areas, aes(fill = score)) +
   theme_minimal() +
   theme(axis.text = element_blank())
 ```
+## Exploring maps for different gender
+```{r}
+gender_and_area <- neighbourhood_rating %>% 
+  filter(measurement == "Percent", gender != "All") %>% 
+  group_by(feature_code, area, year, gender) %>% 
+  summarise(total_score = sum(score)) %>% 
+  group_by(feature_code, area, gender) %>% 
+  summarise(score = mean(total_score))
+```
+```{r}
+joined_gender <- uk_boundaries %>% 
+  right_join(gender_and_area, by = join_by(code == feature_code))
+```
 
+```{r}
+ggplot(joined_gender, aes(fill = score)) +
+  geom_sf() +
+  facet_wrap(~gender)
+```
+### both together
+```{r}
+council_boundaries <- st_read(
+  dsn = here("clean_data/map_data/"),
+  layer = "pub_las")
+
+spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv")) 
+
+# spatial_neighbourhood_joined <- council_boundaries %>% 
+#    right_join(spatial_neighbourhood, by = join_by(code == feature_code))
+
+spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
+
+# spatial_community_joined <- council_boundaries %>% 
+#    right_join(spatial_community, by = join_by(code == feature_code))
+```
+```{r}
+spatial_neighbourhood <- spatial_neighbourhood %>% 
+  rename("neighbourhood_score" = score) %>% 
+  rename("neighbourhood_change" = diff)
+
+spatial_community <- spatial_community %>% 
+  rename("community_score" = score) %>% 
+  rename("community_change" = diff)
+
+all_joined <- spatial_community %>% 
+  full_join(spatial_neighbourhood) %>% 
+  pivot_longer(c(community_score, neighbourhood_score),
+               names_to = "metric", values_to = "score") %>% 
+  mutate(metric = str_remove(metric, "_[a-z]+$")) %>% 
+  pivot_longer(c(community_change, neighbourhood_change),
+               names_to = "change_metric", values_to = "change") %>% 
+  mutate(change_metric = str_remove(change_metric, "_[a-z]+$")) %>% 
+  filter(metric == change_metric) %>% 
+  select(-change_metric)
+```
+
+```{r}
+all_joined_spatial <- council_boundaries %>% 
+  right_join(all_joined, by = join_by(code == feature_code))
+```
+
+```{r}
+ggplot(all_joined_spatial, aes(fill = score)) +
+  geom_sf() +
+  facet_wrap(~metric)
+```
 
