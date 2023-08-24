@@ -4,7 +4,7 @@ library(sf)
 neighbourhood_rating <- read_csv("clean_data/neighbourhood_rating.csv")
 community_belonging <- read_csv("clean_data/community_belonging.csv")
 council_boundaries <- st_read(
-  dsn = here("clean_data/map_data/"),
+  dsn = "clean_data/map_data/",
   layer = "pub_las")
 
 aggregated_neighbourhood <- neighbourhood_rating %>% 
@@ -26,10 +26,10 @@ joined_neighbourhood <- aggregated_neighbourhood %>%
   summarise(score = mean(avg_score)) %>% 
   full_join(change_in_score)
 
-aggregated_neighbourhood %>% 
-  left_join(council_boundaries, by = join_by(feature_code == code))
+# spatial_neighbourhood <- joined_neighbourhood %>% 
+#   left_join(council_boundaries, by = join_by(feature_code == code))
 
-write_csv(aggregated_neighbourhood, "clean_data/spatial_neighbourhood.csv")
+write_csv(joined_neighbourhood, "clean_data/spatial_neighbourhood.csv")
 
 # FIX
 

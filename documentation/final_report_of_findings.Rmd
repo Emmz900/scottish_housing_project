@@ -84,15 +84,17 @@ A shiny app was created to help explore the data in an interactive way. This wil
 
 
 ```{r}
-spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv"))
+council_boundaries <- st_read(
+  dsn = here("clean_data/map_data/"),
+  layer = "pub_las")
+
+spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv")) %>% 
+   left_join(council_boundaries, by = join_by(feature_code == code))
+
 spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
 ```
 ```{r}
-spatial_neighbourhood %>% 
-  filter(urban_rural_classification != "All") %>% 
-  group_by(feature_code, year) %>% 
-  summarise(score = mean(score)) %>% 
-  ggplot(aes(fill = score)) +
+ggplot(spatial_neighbourhood, aes(fill = score)) +
   geom_sf()
 ```
 
