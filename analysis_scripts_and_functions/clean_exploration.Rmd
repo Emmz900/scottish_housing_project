@@ -904,3 +904,13 @@ ggplot(all_joined_spatial, aes(fill = score)) +
   facet_wrap(~metric)
 ```
 
+# function to make map?
+```{r}
+make_map <- function(category, fill_type = score){
+  neighbourhood_rating %>% 
+    filter(measurement == "Percent", {{category}} != "All") %>% 
+    group_by(feature_code, area, year, {{category}}) %>% 
+    
+}
+```
+

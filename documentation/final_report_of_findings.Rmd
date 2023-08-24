@@ -12,6 +12,7 @@ library(tidyverse)
 library(here)
 library(infer)
 library(GGally)
+library(sf)
 ```
 
 ### Data
@@ -31,6 +32,20 @@ neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>
                                                  "No opinion",
                                                  "Fairly good",
                                                  "Very good")))
+
+council_boundaries <- st_read(
+  dsn = here("clean_data/map_data/"),
+  layer = "pub_las")
+
+spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv")) 
+
+spatial_neighbourhood_joined <- council_boundaries %>% 
+   right_join(spatial_neighbourhood, by = join_by(code == feature_code))
+
+spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
+
+spatial_community_joined <- council_boundaries %>% 
+   right_join(spatial_community, by = join_by(code == feature_code))
 ```
 
 ### Functions
@@ -78,26 +93,19 @@ To aid analysis each row of the data was given a score based on the percentage o
 - "Fairly strongly"         4
 - "Very strongly"           5
 
-## Exploration
-
-A shiny app was created to help explore the data in an interactive way. This will be referred to here and can be found within the `explanatory_app` folder of this repository.
+## General Community Belonging and Neighbourhood Ratings across Scotland
 
 
 ```{r}
-council_boundaries <- st_read(
-  dsn = here("clean_data/map_data/"),
-  layer = "pub_las")
-
-spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv")) %>% 
-   left_join(council_boundaries, by = join_by(feature_code == code))
-
-spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
-```
-```{r}
-ggplot(spatial_neighbourhood, aes(fill = score)) +
+ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
   geom_sf()
 ```
 
+```{r}
+ggplot(spatial_community_joined, aes(fill = score)) +
+  geom_sf()
+```
+A shiny app was created to help explore the data in an interactive way. This will be referred to here and can be found within the `explanatory_app` folder of this repository.
 
 # 3. Does access to greenspace impact neighbourhood ratings or community belonging?
 
