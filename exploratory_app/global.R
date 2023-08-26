@@ -27,6 +27,7 @@ optional_variables <- c("gender", "urban_rural_classification", "simd_quintiles"
                         "walking_distance_to_nearest_greenspace")
 
 ui <- fluidPage(
+  tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"),
   tabsetPanel(type = "tabs",
               tabPanel("Neighbourhood Rating",
                        fluidRow(
@@ -45,7 +46,7 @@ ui <- fluidPage(
                            width = 2,
                            sliderInput("year_input_n", "Year",
                                        min = 2013, max = 2019, value = 2019,
-                                       step = 1, sep = "", ticks = FALSE)
+                                       step = 1, sep = "", ticks = TRUE)
                          )
                        ),
                        fluidRow(
@@ -72,7 +73,7 @@ ui <- fluidPage(
                            width = 2,
                            sliderInput("year_input_c", "Year",
                                        min = 2013, max = 2019, value = 2019,
-                                       step = 1, sep = "", ticks = FALSE)
+                                       step = 1, sep = "", ticks = TRUE)
                          )
                        ),
                        fluidRow(
@@ -87,6 +88,11 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
+  # variable_n <- reactive({
+  #   str_to_lower(get(input$variable_input_n)) %>% 
+  #   str_replace_all(" ", "_")
+  #   })
+  
   output$score_plot_n <- renderPlot({
     neighbourhood_rating %>% 
       filter(area == input$area_input_n, measurement == "Percent",
@@ -95,16 +101,16 @@ server <- function(input, output, session) {
                 .by = c(year, input$variable_input_n)) %>% 
       ggplot(aes(year, mean_score, colour = get(input$variable_input_n))) +
       geom_line() +
-      geom_point() +
+      geom_point(size = 5) +
       scale_x_continuous(breaks = seq(2013, 2019, 1)) +
-      #scale_y_continuous(limits = c(0, 5)) +
+      #scale_y_continuous(limits = c(-1, 1)) +
       geom_vline(xintercept = input$year_input_n,
                  colour = "black", alpha = 0.5) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 16)) +
+            text = element_text(size = 18)) +
       labs(
         title = "Neighbourhood Rating Score",
         x = "Year",
@@ -121,13 +127,14 @@ server <- function(input, output, session) {
       select(input$variable_input_n, neighbourhood_rating, value) %>% 
       ggplot(aes(neighbourhood_rating, value, fill = get(input$variable_input_n))) +
       geom_col(position = "dodge") +
-      geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+      geom_text(aes(label = paste(value, "%")), vjust = -1,
+                position = position_dodge(0.9)) +
       scale_y_continuous(limits = c(0, 100)) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 16)) +
+            text = element_text(size = 18)) +
       labs(
         title = "Neighbourhood Rating Responses",
         x = "Neighbourhood Rating",
@@ -135,6 +142,11 @@ server <- function(input, output, session) {
         fill = "Classification"
       )
   })
+    
+    # variable_c <- reactive({
+    #   str_to_lower(input$variable_input_c) %>% 
+    #   str_replace_all(" ", "_")
+    # }) 
   
   output$score_plot_c <- renderPlot({
     community_belonging %>% 
@@ -144,7 +156,7 @@ server <- function(input, output, session) {
                 .by = c(year, input$variable_input_c)) %>% 
       ggplot(aes(year, total_score, colour = get(input$variable_input_c))) +
       geom_line() +
-      geom_point() +
+      geom_point(size = 5) +
       scale_x_continuous(breaks = seq(2013, 2019, 1)) +
       geom_vline(xintercept = input$year_input_c,
                  colour = "black", alpha = 0.5) +
@@ -152,7 +164,7 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 16)) +
+            text = element_text(size = 18)) +
       labs(
         title = "Community Belonging Score",
         x = "Year",
@@ -170,13 +182,14 @@ server <- function(input, output, session) {
       select(input$variable_input_c, community_belonging, value) %>% 
       ggplot(aes(community_belonging, value, fill = get(input$variable_input_c))) +
       geom_col(position = "dodge") +
-      geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
+      geom_text(aes(label = paste(value, "%")), vjust = -1,
+                position = position_dodge(0.9)) +
       scale_y_continuous(limits = c(0, 100)) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 16)) +
+            text = element_text(size = 18)) +
       labs(
         title = "Community Belonging Responses",
         x = "Community Belonging",

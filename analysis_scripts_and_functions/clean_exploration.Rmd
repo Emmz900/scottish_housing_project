@@ -87,6 +87,25 @@ neighbourhood_rating %>%
 ```{r}
 (102/(3708+915))*100
 ```
+
+```{r}
+neighbourhood_rating %>% 
+  filter(area == "Na h-Eileanan Siar", year == 2016, measurement == "Percent",
+         type_of_tenure != "All")
+```
+```{r}
+neighbourhood_rating %>% 
+      filter(area == "Na h-Eileanan Siar", measurement == "Percent",
+             type_of_tenure != "All") %>% 
+      summarise(mean_score = sum(score),
+                .by = c(year, type_of_tenure)) %>% 
+      ggplot(aes(year, mean_score, colour = type_of_tenure)) +
+      geom_line() +
+      geom_point(size = 5)
+```
+
+
+
 # Join the data?
 ```{r eval=FALSE}
 community_belonging

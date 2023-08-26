@@ -1,7 +1,9 @@
 ---
 title: "Report on Community Belonging and Neighbourhood Ratings"
 author: "Emma Menzies"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Libraries and Data
@@ -63,11 +65,16 @@ Every year the ![Scottish Household Survey](https://www.gov.scot/collections/sco
 
 This analysis and report will explore the responses given in this survey about neighbourhood ratings and community belonging, and how these are related to other factors such as access to green space, household type, and council area. The data available is from 2013-2019. Due to the COVID pandemic in 2020 the format of the survey had to change to telephone interview. Data from 2020 and 2021 has therefore been explored separately. 
 
-Data Sources:
+## Data Sources:
 
 * ![2013-2019](https://statistics.gov.scot/resource?uri=http%3A%2F%2Fstatistics.gov.scot%2Fdata%2Fcommunity-belonging---shs)
 * ![2020](https://www.gov.scot/publications/scottish-household-survey-2020-telephone-survey-key-findings/documents/)
 * ![2021](https://www.gov.scot/publications/scottish-household-survey-2021-telephone-survey-key-findings/documents/)
+
+## Key terms
+
+* social rented = (managed by public authorities and housing associations with support from the Scottish Government) ![](https://www.gov.scot/policies/social-housing/)
+* SIMD = 
 
 ## Ethics
 
@@ -138,20 +145,27 @@ top_10_community %>%
 
 ## Shiny app exploration
 
+An app was created to explore both the overall rating over the years, and distribution of ratings within each year. The data can be explored across the different council areas, as well as the different categories provdide. The app has two tabs, one for neighbourhood rating and one for community belonging.
+
+An example output from the app:
+![](app_screenshot.png)
+
 ### Outer Hebrides (Na h-Eileanan Siar)
 
 The key features of those surveyed from 2013 to 2019 in the Outer Hebrides are:
 
 * Within less than 10 minutes walking distance to greenspace
-* White
-* No Private Rentals
+* White (ethnicity)
+* Home owners or social rented
 * In the 80% least deprived category
 
-Other interesting findings include a higher percentage of people in **rural** areas said their neighbourhood was "Very good" (94%) compared to urban areas (80%) (*since 2017*). Community belonging was also higher in rural areas across all but 1 year
+Interesting findings include:
 
-A higher percentage of people in **owned properties** also voted "Very good" compared to those in socially rented accommodation.
+Since 2017 a higher percentage of people in **rural** areas have said their neighbourhood was "Very good" compared to those in urban areas. Community belonging was also higher in rural areas across all but 1 year. The percentage of people that feel "Very strongly" that they belong to their local neighbourhood is considerably higher in rural areas and this has been increasing since 2015.
 
-Similarly a higher percentage of **pensioners** voted "Very good" compared to households with adults or with children. (*generally slightly higher over the years*)
+A higher percentage of people in **owned properties** also said that their neighbourhood was "Very good" and that they felt "Very strongly" that they belong to their neighbourhood compared to those in social rented accommodation.
+
+Similarly, a higher percentage of **pensioners** voted rated their neighbourhood and community belonging the highest option compared to households with adults or with children, and tended to rate both higher as a whole.
 
 ### Orkney Islands
 
@@ -161,7 +175,13 @@ Those surveyed were:
 * White
 * Home owners
 
-**Pensioners** consistently scored their neighbourhoods higher than other groups.
+Interesting findings include:
+
+Overall **females** gave higher ratings of both neighbourhood ratings and community belonging.
+
+Although **rural** areas tended to be rated higher for both neighbourhood ratings and community belonging, urban areas had a higher overall rating for community belonging in 2019, and the average neighbourhood ratings were higher for urban areas in 2016, 2018, and 2019.
+
+**Pensioners** consistently scored their neighbourhoods and community belonging higher than other groups. In 2019 71% of pensioners surveyed felt "Very strongly" that they belonged to their local neighbourhood. Only 44% and 36% of households with only adults, and households with children respectively rated their community belonging "Very strongly".
 
 The average rating significantly dropped in 2019 compared to previous years.
 

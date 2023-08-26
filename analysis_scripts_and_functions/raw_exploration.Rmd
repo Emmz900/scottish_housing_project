@@ -317,7 +317,7 @@ data_small <- full_data_2019 %>%
 ```
 
 ```{r}
-lm(rb1 ~ ., data_small) %>% 
+lm(rb1 ~ randecon, data_small) %>% 
   summary()
 ```
 
