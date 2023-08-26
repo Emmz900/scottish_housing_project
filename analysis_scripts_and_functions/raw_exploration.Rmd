@@ -302,6 +302,75 @@ neighbourhood_rating %>%
   distinct(neighbourhood_rating)
 ```
 
+# Tab data
+
+```{r}
+full_data_2019 <- read.delim(here("raw_data/tab/shs2019_social_public.tab"))
+```
+```{r}
+data_small <- full_data_2019 %>% 
+  filter(rand_ok == 1) %>% 
+  select(randage, randgender, randecon,
+         tenure_harm, hhtype_new, rb1:asb1i) %>%
+  mutate(across(where(is.numeric), as.factor)) %>% 
+  mutate(randage = as.numeric(randage))
+```
+
+```{r}
+lm(rb1 ~ ., data_small) %>% 
+  summary()
+```
+
+
+
+```{r}
+full_data_2019 %>% 
+  filter(rand_ok == 1) %>% 
+  select(dyear, council, randage, randgender, randecon,
+         tenure_harm, hhtype_new, rb1:asb1i) %>% 
+  mutate(council = case_when(
+    council == "T" ~ "Moray",
+  council == "5" ~ "West Lothian",
+  council == "Y" ~ "Renfrewshire",
+  council == "C" ~ "Angus",
+  council == "R" ~ "Inverclyde",
+  council == "U" ~ "North Ayrshire",
+  council == "X" ~ "Perth and Kinross",
+  council == "6" ~ "Eilean Siar",
+  council == "B" ~ "Aberdeenshire",
+  council == "D" ~ "Argyll and Bute",
+  council == "E" ~ "Scottish Borders",
+  council == "H" ~ "Dundee City",
+  council == "1" ~ "South Ayrshire",
+  council == "2" ~ "South Lanarkshire",
+  council == "F" ~ "Clackmannanshire",
+  council == "G" ~ "Dumfries and Galloway",
+  council == "" ~ "",
+  council == "" ~ "",
+  council == "" ~ "",
+Value =   	Label = 
+	Value =   	Label = 
+	Value =   	Label = 
+	Value = Q  	Label = Highland
+	Value = 3  	Label = Stirling
+	Value = A  	Label = Aberdeen City
+	Value = 4  	Label = West Dumbartonshire
+	Value = L  	Label = East Renfrewshire
+	Value = N  	Label = Falkirk
+	Value = K  	Label = East Lothian
+	Value = O  	Label = Fife
+	Value = J  	Label = East Dumbartonshire
+	Value = W  	Label = Orkney
+	Value = P  	Label = Glasgow City
+	Value = Z  	Label = Shetland
+	Value = V  	Label = North Lanarkshire
+	Value = I  	Label = East Ayrshire
+	Value = S  	Label = Midlothian
+	Value = M  	Label = Edinburgh City
+
+  ))
+```
+
 
 
 

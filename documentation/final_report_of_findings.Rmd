@@ -110,26 +110,35 @@ ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
 ```
 The highest neighbourhood ratings are found in the Outer Hebrides, Orkney, and Shetland.
 
-```{r}
-neighbourhood_rating %>% 
+```{r message=FALSE}
+top_10_neighbourhood <- neighbourhood_rating %>% 
   filter(measurement == "Percent", gender != "All") %>% 
   group_by(feature_code, area, year, gender) %>% 
   summarise(total_score = sum(score)) %>% 
   group_by(area) %>% 
-  summarise(avg_score = mean(total_score)) %>% 
-  slice_max(avg_score, n = 10)
+  summarise(avg_neighbourhood_score = mean(total_score)) %>% 
+  slice_max(avg_neighbourhood_score, n = 10)
+top_10_neighbourhood
 
-community_belonging %>% 
+top_10_community <- community_belonging %>% 
   filter(measurement == "Percent", gender != "All") %>% 
   group_by(feature_code, area, year, gender) %>% 
   summarise(total_score = sum(score)) %>% 
   group_by(area) %>% 
-  summarise(avg_score = mean(total_score)) %>% 
-  slice_max(avg_score, n = 10)
+  summarise(avg_community_score = mean(total_score)) %>% 
+  slice_max(avg_community_score, n = 10)
+top_10_community
 ```
+Those that have high neighbourhood ratings and community belonging:
+```{r}
+top_10_community %>% 
+  inner_join(top_10_neighbourhood)
+```
+
+
 ## Shiny app exploration
 
-### Outer Hebrides
+### Outer Hebrides (Na h-Eileanan Siar)
 
 The key features of those surveyed from 2013 to 2019 in the Outer Hebrides are:
 
@@ -138,7 +147,7 @@ The key features of those surveyed from 2013 to 2019 in the Outer Hebrides are:
 * No Private Rentals
 * In the 80% least deprived category
 
-Other interesting findings include a higher percentage of people in **rural** areas voting for "Very good" (94%) compared to urban areas (80%) (*since 2017*).
+Other interesting findings include a higher percentage of people in **rural** areas said their neighbourhood was "Very good" (94%) compared to urban areas (80%) (*since 2017*). Community belonging was also higher in rural areas across all but 1 year
 
 A higher percentage of people in **owned properties** also voted "Very good" compared to those in socially rented accommodation.
 
