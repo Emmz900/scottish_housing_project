@@ -907,10 +907,58 @@ ggplot(all_joined_spatial, aes(fill = score)) +
 # function to make map?
 ```{r}
 make_map <- function(category, fill_type = score){
-  neighbourhood_rating %>% 
+  neighbourhood <- neighbourhood_rating %>% 
     filter(measurement == "Percent", {{category}} != "All") %>% 
     group_by(feature_code, area, year, {{category}}) %>% 
-    
+    summarise(score = sum(score)) %>% 
+    group_by(feature_code, area, {{category}}) %>% 
+    summarise(score = mean(score))
+  
+  joined <- council_boundaries %>% 
+    right_join(neighbourhood, by = join_by(code == feature_code))
+  
+  return(joined)
 }
+```
+
+```{r}
+make_map(urban_rural_classification) %>% 
+    ggplot(aes(fill = score)) +
+    geom_sf () +
+    facet_grid(~urban_rural_classification)
+```
+
+```{r}
+neighbourhood <- neighbourhood_rating %>% 
+    filter(measurement == "Percent", gender != "All") %>% 
+    group_by(feature_code, area, year, gender) %>% 
+    summarise(score = sum(score)) %>% 
+    group_by(feature_code, area, gender) %>% 
+    summarise(neighbourhood_score = mean(score)) %>% 
+    mutate(id = str_c(feature_code, gender)) 
+
+  community <- community_belonging %>% 
+    filter(measurement == "Percent", gender != "All") %>% 
+    group_by(feature_code, area, year, gender) %>% 
+    summarise(score = sum(score)) %>% 
+    group_by(feature_code, area, gender) %>% 
+    summarise(community_score = mean(score)) %>% 
+    mutate(id = str_c(feature_code, gender))
+  
+  ratings <- neighbourhood %>% 
+    select(id, neighbourhood_score) %>% 
+    full_join(community, by = join_by(id)) %>% 
+    pivot_longer(c(neighbourhood_score, community_score),
+                 names_to = "rating_type", values_to = "score") %>% 
+    mutate(rating_type = str_remove(rating_type, "_score")) %>% 
+    select(feature_code.x, area.x, gender, rating_type, score)
+  
+  joined <- council_boundaries %>% 
+    right_join(ratings, by = join_by(code == feature_code.x))
+  
+  joined %>% 
+    ggplot(aes(fill = score)) +
+    geom_sf () +
+    facet_grid(rating_type~gender)
 ```
 
