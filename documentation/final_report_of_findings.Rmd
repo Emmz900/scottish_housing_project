@@ -142,7 +142,6 @@ top_10_community %>%
   inner_join(top_10_neighbourhood)
 ```
 
-
 ## Shiny app exploration
 
 An app was created to explore both the overall rating over the years, and distribution of ratings within each year. The data can be explored across the different council areas, as well as the different categories provdide. The app has two tabs, one for neighbourhood rating and one for community belonging.
@@ -193,20 +192,38 @@ Those surveyed were:
 * White
 * Within less than 10 minutes walking distance of greenspace
 
-People in **rural** areas consistently rated their neighbourhood much higher, and were much more likely to rate it "Very good" than those in urban areas.
+People in **rural** areas consistently rated their neighbourhood  and community belonging much higher, and were much more likely to rate their neighbourhoods as "Very good", and community belonging as "Very strongly" compared to those in urban areas.
 
-Those who **own their homes** give higher ratings, and are more likely to rate their neighbourhoods "Very good". No one from rented properties were surveyed in 2018 or 2019.
+Those who **own their homes** give higher ratings for both neighbourhood ratings and community belonging, and are more likely to rate their neighbourhoods "Very good". No one from rented properties were surveyed in 2018 or 2019.
 
-In general **pensioners** were more likely to give their neighbourhood a higher rating.
-
-### Highly rated urban areas
-
-These findings were similar in East Dunbartonshire and East Renfrewshire despite everyone surveyed being from urban areas. Those surveyed were almost exclusively white home-owners in the 80% least deprived bracket that live within 10 minutes walking distances from greenspace.
+In general **pensioners** were more likely to give their neighbourhood a higher rating, and have consistently felt stronger community belonging than other groups surveyed.
 
 *Note:* Is this survey bias or representative of these areas?
 
-East Dunbartonshire has higher wages, house prices, life expectancy, and school leavers participating in Education, Training or Employment than Scotland as a whole. They also have lower crime rates. Around 4.2% of the population were from a minority ethnic group in 2011, this was very similar to Scotland as a whole.
-![East Dunbartonshire statistics](https://www.eastdunbarton.gov.uk/statistics-facts-and-figures-0)
+```{r}
+bottom_10_neighbourhood <- neighbourhood_rating %>% 
+  filter(measurement == "Percent", gender != "All") %>% 
+  group_by(feature_code, area, year, gender) %>% 
+  summarise(total_score = sum(score)) %>% 
+  group_by(area) %>% 
+  summarise(avg_neighbourhood_score = mean(total_score)) %>% 
+  slice_min(avg_neighbourhood_score, n = 10)
+bottom_10_neighbourhood
+
+bottom_10_community <- community_belonging %>% 
+  filter(measurement == "Percent", gender != "All") %>% 
+  group_by(feature_code, area, year, gender) %>% 
+  summarise(total_score = sum(score)) %>% 
+  group_by(area) %>% 
+  summarise(avg_community_score = mean(total_score)) %>% 
+  slice_min(avg_community_score, n = 10)
+bottom_10_community
+```
+```{r}
+bottom_10_community %>% 
+  inner_join(bottom_10_neighbourhood)
+```
+
 
 
 ```{r}
