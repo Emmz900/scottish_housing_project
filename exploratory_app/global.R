@@ -2,8 +2,10 @@ library(tidyverse)
 library(shiny)
 library(here)
 
+# Functions -------------
 source(here("analysis_scripts_and_functions/create_2019_graph.R"))
 
+# Data --------------
 community_belonging <- read_csv(here("clean_data/community_belonging.csv"))  %>% 
   mutate(community_belonging = factor(community_belonging, 
                                       levels = c("Not at all strongly", 
@@ -19,66 +21,79 @@ neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>
                                                   "No opinion",
                                                   "Fairly good",
                                                   "Very good")))
-
+# Lists ------------------
 areas <- sort(unique(community_belonging$area))
 years <- sort(unique(neighbourhood_rating$year))
 optional_variables <- c("gender", "urban_rural_classification", "simd_quintiles",
                         "type_of_tenure", "household_type", "ethnicity",
                         "walking_distance_to_nearest_greenspace")
 
+# UI -----------------
 ui <- fluidPage(
-  tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"),
+  tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"), # removes minor tick marks from year slider
   tabsetPanel(type = "tabs",
-              tabPanel("Neighbourhood Rating",
+              # Neighbourhood Rating tab ----------------
+              tabPanel(tags$h1("Neighbourhood Rating"),
                        fluidRow(
+                         ## Area input ------------
                          column(
                            width = 2,
-                           selectInput("area_input_n", "Area", areas,
+                           selectInput("area_input_n", tags$h2("Area"), areas,
                                        selected = "Scotland")
                          ),
+                         ## Variable input ----------------
                          column(
                            width = 2,
-                           selectInput("variable_input_n", "Group",
+                           selectInput("variable_input_n", tags$h2("Group"),
                                        optional_variables,
                                        selected = "walking_distance_to_nearest_greenspace")
                          ),
+                         # Year slider input -------------------
                          column(
                            width = 2,
-                           sliderInput("year_input_n", "Year",
+                           sliderInput("year_input_n", tags$h2("Year"),
                                        min = 2013, max = 2019, value = 2019,
                                        step = 1, sep = "", ticks = TRUE)
                          )
                        ),
+                       ## Line plot of years -----------
                        fluidRow(
                          plotOutput("score_plot_n")
                        ),
+                       ## Col plot of responses ---------------
                        fluidRow(
                          plotOutput("percentage_plot_n")
                        )
               ),
-              tabPanel("Community Belonging",
+              # Community Belonging tab -----------
+              tabPanel(tags$h1("Community Belonging"),
                        fluidRow(
+                         ## Area input ----------
                          column(
                            width = 2,
-                           selectInput("area_input_c", "Area", areas,
+                           selectInput("area_input_c", tags$h2("Area"), areas,
                                        selected = "Scotland")
                          ),
+                         ## Variable Input --------------
                          column(
                            width = 2,
-                           selectInput("variable_input_c", "Group",
+                           selectInput("variable_input_c", tags$h2("Group"),
                                        optional_variables,
                                        selected = "walking_distance_to_nearest_greenspace")
                          ),
+                         ## Year Slider Input ---------------
                          column(
                            width = 2,
-                           sliderInput("year_input_c", "Year",
+                           sliderInput("year_input_c", tags$h2("Year"),
                                        min = 2013, max = 2019, value = 2019,
                                        step = 1, sep = "", ticks = TRUE)
                          )
                        ),
+                       ## Line plot of years ------------
                        fluidRow(
                          plotOutput("score_plot_c")
                        ),
+                       ## Col plot of responses -----------
                        fluidRow(
                          plotOutput("percentage_plot_c")
                        )
@@ -86,6 +101,7 @@ ui <- fluidPage(
   )
 )
 
+# Server ------------------
 server <- function(input, output, session) {
   
   # variable_n <- reactive({
@@ -110,7 +126,7 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 18)) +
+            text = element_text(size = 24)) +
       labs(
         title = "Neighbourhood Rating Score",
         x = "Year",
@@ -128,13 +144,13 @@ server <- function(input, output, session) {
       ggplot(aes(neighbourhood_rating, value, fill = get(input$variable_input_n))) +
       geom_col(position = "dodge") +
       geom_text(aes(label = paste(value, "%")), vjust = -1,
-                position = position_dodge(0.9)) +
+                position = position_dodge(0.9), size = 8) +
       scale_y_continuous(limits = c(0, 100)) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 18)) +
+            text = element_text(size = 24)) +
       labs(
         title = "Neighbourhood Rating Responses",
         x = "Neighbourhood Rating",
@@ -164,7 +180,7 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 18)) +
+            text = element_text(size = 24)) +
       labs(
         title = "Community Belonging Score",
         x = "Year",
@@ -183,13 +199,13 @@ server <- function(input, output, session) {
       ggplot(aes(community_belonging, value, fill = get(input$variable_input_c))) +
       geom_col(position = "dodge") +
       geom_text(aes(label = paste(value, "%")), vjust = -1,
-                position = position_dodge(0.9)) +
+                position = position_dodge(0.9), size = 8) +
       scale_y_continuous(limits = c(0, 100)) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
-            text = element_text(size = 18)) +
+            text = element_text(size = 24)) +
       labs(
         title = "Community Belonging Responses",
         x = "Community Belonging",

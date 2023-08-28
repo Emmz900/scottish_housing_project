@@ -8,7 +8,13 @@ output: html_notebook
 library(tidyverse)
 library(here)
 
-community_belonging <- read_csv(here("clean_data/community_belonging.csv"))
+community_belonging <- read_csv(here("clean_data/community_belonging.csv")) %>% 
+  mutate(community_belonging = factor(community_belonging, 
+                                      levels = c("Not at all strongly", 
+                                                 "Not very strongly",
+                                                 "Don't know",
+                                                 "Fairly strongly",
+                                                 "Very strongly")))
 ```
 ```{r}
 community_belonging %>% 
@@ -665,13 +671,14 @@ visualise_diff_in_means(community_belonging, type_of_tenure, "Owned Outright")
 ```{r}
 create_2019_community_graph <- function(category){
   community_belonging %>% 
-    filter(area == "Scotland", measurement == "Percent", {{category}} != "All",
-           year == "2019") %>% 
+    filter(area == "Scotland", measurement == "Percent",
+           {{category}} != "All",year == "2019") %>% 
     select({{category}}, community_belonging, value) %>% 
-    ggplot(aes(community_belonging, value, fill = {{category}})) +
+    ggplot(aes(community_belonging, value
+               , fill = {{category}})) +
     geom_col(position = "dodge") +
-    geom_text(aes(label = paste(value, "%")), vjust = -1, position = position_dodge(0.9)) +
-    #facet_wrap(~{{category}}) +
+    geom_text(aes(label = paste(value, "%")),
+              vjust = -1, position = position_dodge(0.9)) +
     scale_y_continuous(limits = c(0, 50)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           panel.grid.major = element_blank(),
@@ -683,8 +690,7 @@ create_2019_community_graph <- function(category){
       x = "Community Belonging",
       y = "Percentage of survey responses",
       fill = "Classification"
-    ) #+
-  #scale_fill_manual(values = c("Rural" = "darkgreen", "Urban" = "darkgrey"))
+    ) 
 }
 ```
 
@@ -699,6 +705,7 @@ create_2019_community_graph(household_type)
 create_2019_community_graph(urban_rural_classification)
 create_2019_community_graph(gender)
 create_2019_community_graph(walking_distance_to_nearest_greenspace)
+ggsave("graphs_and_images/community_and_greenspace.png")
 ```
 
 ```{r}
@@ -722,8 +729,7 @@ create_2019_neighbourhood_graph <- function(category){
       y = "Percentage of survey responses",
       fill = str_wrap(str_to_title(str_replace_all(deparse(substitute(category)),
                                                    "_", " ")), 20)
-    ) #+
-  #scale_fill_manual(values = c("Rural" = "darkgreen", "Urban" = "darkgrey"))
+    )
 }
 ```
 
@@ -738,6 +744,7 @@ create_2019_neighbourhood_graph(household_type)
 create_2019_neighbourhood_graph(urban_rural_classification)
 create_2019_neighbourhood_graph(gender)
 create_2019_neighbourhood_graph(walking_distance_to_nearest_greenspace)
+ggsave("graphs_and_images/neighbourhood_and_greenspace.png")
 ```
 
 ```{r}

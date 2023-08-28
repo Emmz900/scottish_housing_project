@@ -18,7 +18,7 @@ library(sf)
 ```
 
 ### Data
-```{r}
+```{r message=FALSE}
 community_belonging <- read_csv(here("clean_data/community_belonging.csv")) %>% 
   mutate(community_belonging = factor(community_belonging, 
                                       levels = c("Not at all strongly", 
@@ -74,7 +74,36 @@ This analysis and report will explore the responses given in this survey about n
 ## Key terms
 
 * social rented = (managed by public authorities and housing associations with support from the Scottish Government) ![](https://www.gov.scot/policies/social-housing/)
-* SIMD = 
+* SIMD = Scottish Index of Multiple Depravation
+![](https://www.gov.scot/collections/scottish-index-of-multiple-deprivation-2020/)
+
+**Neighbourhood rating**
+
+The question asked by the survey is as follows:
+>"THINKING NOW ABOUT THE NEIGHBOURHOOD YOU LIVE IN, HOW
+WOULD YOU RATE IT AS A PLACE TO LIVE?
+If pressed, define 'your neighbourhood' as: 'the street you live in and the
+streets nearby' (urban) or 'the local area' (rural)."
+
+The options given for the response were:
+>"(1) Very good 
+  (2) Fairly good 
+  (3) Fairly poor 
+  (4) Very poor 
+  No opinion"
+  
+**Community Belonging**
+
+The question asked by the survey is as follows:
+>"HOW STRONGLY DO YOU FEEL YOU BELONG TO YOUR IMMEDIATE
+NEIGHBOURHOOD?"
+
+The options given for the response were:
+>"(1) Very strongly
+  (2) Fairly strongly
+  (3) Not very strongly
+  (4) Not at all strongly
+  Don't know Spontaneous"
 
 ## Ethics
 
@@ -87,34 +116,53 @@ Since the data collected in the survey contains sensitive information, the data 
 To aid analysis each row of the data was given a score based on the percentage of people that gave that rating, and the rating itself coded with the following values:
 
 **Neighbourhood Rating** 
-- "Very poor"               1
-- "Fairly poor"             2
-- "No opinion"              3
-- "Fairly good"             4
-- "Very good"               5
+- "Very poor"               -1
+- "Fairly poor"             -0.5
+- "No opinion"               0
+- "Fairly good"              0.5
+- "Very good"                1
 
 **Community Belonging**
-- "Not at all strongly"     1
-- "Not very strongly"       2
-- "Don't know"              3
-- "Fairly strongly"         4
-- "Very strongly"           5
+- "Not at all strongly"     -1
+- "Not very strongly"       -0.5
+- "Don't know"               0
+- "Fairly strongly"          0.5
+- "Very strongly"            1
 
 ## General Community Belonging and Neighbourhood Ratings across Scotland
 
 
-```{r}
+```{r warning=FALSE}
 ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
   geom_sf() +
-  scale_fill_distiller(palette = "3-class Greens", direction = 1) +
+  scale_fill_distiller(palette = "PuBu", direction = 1) +
   theme_minimal() +
-  theme(axis.text = element_blank()) +
+  theme(axis.text = element_blank(),
+        panel.grid = element_blank()) +
   labs(
     title = "Average Neighbourhood Ratings",
-    subtitle = "Scale is -1 to 1"
+    subtitle = "Scale is -1 to 1",
+    fill = "Score"
   )
-  
+ggsave("neighbourhood_map.png")
 ```
+
+```{r}
+ggplot(spatial_community_joined, aes(fill = score)) +
+  geom_sf() +
+  scale_fill_distiller(palette = "PuBu", direction = 1) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        panel.grid = element_blank()) +
+  labs(
+    title = "Average Community Belonging",
+    subtitle = "Scale is -1 to 1",
+    fill = "Score"
+  )
+ggsave("community_map.png")
+```
+
+## Top Rated Areas
 The highest neighbourhood ratings are found in the Outer Hebrides, Orkney, and Shetland.
 
 ```{r message=FALSE}
@@ -142,9 +190,9 @@ top_10_community %>%
   inner_join(top_10_neighbourhood)
 ```
 
-## Shiny app exploration
+Shiny app exploration
 
-An app was created to explore both the overall rating over the years, and distribution of ratings within each year. The data can be explored across the different council areas, as well as the different categories provdide. The app has two tabs, one for neighbourhood rating and one for community belonging.
+An app was created to explore both the overall rating over the years, and distribution of ratings within each year. The data can be explored across the different council areas, as well as the different categories provided. The app has two tabs, one for neighbourhood rating and one for community belonging.
 
 An example output from the app:
 ![](app_screenshot.png)
@@ -200,6 +248,7 @@ In general **pensioners** were more likely to give their neighbourhood a higher 
 
 *Note:* Is this survey bias or representative of these areas?
 
+## Bottom Rated areas
 ```{r}
 bottom_10_neighbourhood <- neighbourhood_rating %>% 
   filter(measurement == "Percent", gender != "All") %>% 
@@ -207,7 +256,7 @@ bottom_10_neighbourhood <- neighbourhood_rating %>%
   summarise(total_score = sum(score)) %>% 
   group_by(area) %>% 
   summarise(avg_neighbourhood_score = mean(total_score)) %>% 
-  slice_min(avg_neighbourhood_score, n = 10)
+  slice_min(avg_neighbourhood_score, n = 12)
 bottom_10_neighbourhood
 
 bottom_10_community <- community_belonging %>% 
@@ -216,15 +265,58 @@ bottom_10_community <- community_belonging %>%
   summarise(total_score = sum(score)) %>% 
   group_by(area) %>% 
   summarise(avg_community_score = mean(total_score)) %>% 
-  slice_min(avg_community_score, n = 10)
+  slice_min(avg_community_score, n = 12)
 bottom_10_community
 ```
 ```{r}
 bottom_10_community %>% 
   inner_join(bottom_10_neighbourhood)
 ```
+### Dundee City
 
+* Urban
+* White
+* Less than 10 minutes from greenspace (all but 2 years)
 
+Low ratings from: 
+
+* 20% most deprived
+* private and social rented
+* adult only households
+* males
+* more than 10 minutes from greenspace
+
+External findings:
+
+* Lower life expectancy than Scotland
+
+![](https://www.nrscotland.gov.uk/files/statistics/council-area-data-sheets/dundee-city-council-profile.html)
+
+### Aberdeen City
+
+* Urban
+* Least deprived
+* White
+
+Low ratings from: 
+* social rented (followed by private rented)
+* males
+* more than 10 minutes from greenspace
+* adults and children (not pensioners)
+
+### Glasgow City
+
+* Urban
+
+Low ratings from: 
+* 20% most deprived
+* non-white ethnicities (community belonging only)
+* private rented (community) / social rented (neighbourhood)
+* adults and children (not pensioners)
+* more than 10 minutes from greenspace
+* males (community) / females (neighbourhood)
+
+## Change
 
 ```{r}
 ggplot(spatial_neighbourhood_joined, aes(fill = diff)) +
@@ -233,35 +325,57 @@ ggplot(spatial_neighbourhood_joined, aes(fill = diff)) +
   scale_fill_gradient2(low = "#e9a3c9", mid = "#f7f7f7", high = "#a1d76a") +
   theme_minimal() +
   theme(axis.text = element_blank())
+
+ggplot(spatial_community_joined, aes(fill = diff)) +
+  geom_sf() +
+  #scale_fill_distiller(palette = "3-class PiYG", type = "div") +
+  scale_fill_gradient2(low = "#e9a3c9", mid = "#f7f7f7", high = "#a1d76a") +
+  theme_minimal() +
+  theme(axis.text = element_blank())
+```
+```{r}
+spatial_community_joined %>% 
+  as.data.frame() %>% 
+  select(local_auth, diff) %>% 
+  slice_max(diff, n = 10) %>% 
+  mutate(diff = diff * 100)
+
+spatial_community_joined %>% 
+  as.data.frame() %>% 
+  select(local_auth, diff) %>% 
+  slice_min(diff, n = 10) %>% 
+  mutate(diff = diff * 100)
+```
+```{r}
+spatial_community_joined %>% 
+  as.data.frame() %>% 
+  select(local_auth, diff) %>% 
+  filter(local_auth == "West Dunbartonshire")
+```
+```{r}
+spatial_neighbourhood_joined %>% 
+  as.data.frame() %>% 
+  select(local_auth, diff) %>% 
+  slice_max(diff, n = 10) %>% 
+  mutate(diff = diff * 100)
+
+spatial_neighbourhood_joined %>% 
+  as.data.frame() %>% 
+  select(local_auth, diff) %>% 
+  slice_min(diff, n = 10) %>% 
+  mutate(diff = diff * 100)
 ```
 
 ```{r}
-ggplot(spatial_community_joined, aes(fill = score)) +
-  geom_sf()
+spatial_neighbourhood_joined %>% 
+  as.data.frame() %>% 
+  select(local_auth, diff) %>% 
+  filter(local_auth == "Glasgow City")
 ```
+
 A shiny app was created to help explore the data in an interactive way. This will be referred to here and can be found within the `explanatory_app` folder of this repository.
 
 # 3. Does access to greenspace impact neighbourhood ratings or community belonging?
-
-## Neighbourhood rating
-
-The question asked by the survey is as follows:
->"THINKING NOW ABOUT THE NEIGHBOURHOOD YOU LIVE IN, HOW
-WOULD YOU RATE IT AS A PLACE TO LIVE?
-If pressed, define 'your neighbourhood' as: 'the street you live in and the
-streets nearby' (urban) or 'the local area' (rural)."
-
-The options given for the response were:
->"(1) Very good 
-  (2) Fairly good 
-  (3) Fairly poor 
-  (4) Very poor 
-  No opinion"
-
-The first factor to explore is walking distance to greenspace, given in greater than, or less than, 10 minutes.
-
-The percentages indicate the percentage of people from the given group which responded in that way to the survey,
-  eg. percentage of people with a walking distance to greenspace less than 10 minutes, that rated their neighbourhood "Very good".
 
 ```{r}
 create_2019_graph_neighbourhood(walking_distance_to_nearest_greenspace)
@@ -294,19 +408,6 @@ neighbourhood_rating %>%
 ```
 
 _This means....._
-
-## Community Belonging
-
-The question asked by the survey is as follows:
->"HOW STRONGLY DO YOU FEEL YOU BELONG TO YOUR IMMEDIATE
-NEIGHBOURHOOD?"
-
-The options given for the response were:
->"(1) Very strongly
-  (2) Fairly strongly
-  (3) Not very strongly
-  (4) Not at all strongly
-  Don't know Spontaneous"
 
 ```{r}
 create_2019_graph_community(walking_distance_to_nearest_greenspace)

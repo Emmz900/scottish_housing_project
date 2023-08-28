@@ -23,7 +23,7 @@ neighbourhood_rating
 # Explore Community Belonging
 ```{r}
 community_belonging %>% 
-   summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
+  summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
 ```
 There are no NA values
 
@@ -307,20 +307,109 @@ neighbourhood_rating %>%
 ```{r}
 full_data_2019 <- read.delim(here("raw_data/tab/shs2019_social_public.tab"))
 ```
+
 ```{r}
 data_small <- full_data_2019 %>% 
   filter(rand_ok == 1) %>% 
-  select(randage, randgender, randecon,
-         tenure_harm, hhtype_new, rb1:asb1i) %>%
-  mutate(across(where(is.numeric), as.factor)) %>% 
-  mutate(randage = as.numeric(randage))
+  select(council, # council area
+         randage, # age
+         randgender, # gender
+         RANDETH2012, # ethnicity
+         #randecon,
+         tenure_harm, #tenure_type
+         hhtype_new, # household type (1, 2, 6, 7 = adult, 3, 4, 5 = children, 8 = pensioner)
+         greenfar13, # how far to nearest green or blue space
+         MD20QUIN, # SIMD (1 = most, 5 = least)
+         SHS_2CLA # urban_rural
+         #rb1:asb1i
+  )
+data_small
+```
+```{r}
+data_clean <- data_small %>% 
+  rename("ethnicity" = "RANDETH2012") %>% 
+  rename("simd" = "MD20QUIN") %>% 
+  rename("urban_rural" = "SHS_2CLA") %>% 
+  mutate(
+    household_type = case_when(
+      hhtype_new %in% c(1, 2, 6, 7) ~ "Adult",
+      hhtype_new %in% c(3, 4, 5) ~ "Children",
+      hhtype_new == 8 ~ "Pensioner"
+    ),
+    gender = case_when(
+      randgender == 1 ~ "Male",
+      randgender == 2 ~ "Female",
+      .default = "Other/Refused"
+    ),
+    ethnicity = case_when(
+      ethnicity == 1 ~ "White",
+      ethnicity == 2 ~ "Other",
+      .default = "Refused/Unknown"
+    ),
+    tenure = case_when(
+      tenure_harm == 1 ~ "Owned Outright",
+      tenure_harm == 2 ~ "Owned Loan/Mortgage",
+      tenure_harm == 3 | tenure_harm == 4  ~ "Social Rented",
+      tenure_harm == 5 ~ "Private Rented",
+      tenure_harm == 6 ~ "Other",
+      .default = "Refused/Unknown"
+    ),
+    greenspace = case_when(
+      greenfar13 == 1 ~ "5 mins or less",
+      greenfar13 == 2 ~ "6-10 mins",
+      greenfar13 == 3 ~ "11-20 mins",
+      greenfar13 == 4 ~ "21-30 mins",
+      greenfar13 == 5 ~ "More than 30",
+      greenfar13 == 6 ~ "Don't know"
+    ),
+    urban_rural = case_when(
+      urban_rural == 1 ~ "Urban",
+      urban_rural == 2 ~ "Rural"
+    )
+    ) %>% 
+  select(-c(hhtype_new, randgender, tenure_harm, greenfar13))
 ```
 
 ```{r}
-lm(rb1 ~ randecon, data_small) %>% 
-  summary()
+data_clean %>% 
+  summarise(across(.cols = everything(), .fns = ~sum(is.na(.x))))
 ```
-
+```{r}
+data_clean %>% 
+  group_by(ethnicity) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+data_clean %>% 
+  group_by(simd) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+data_clean %>% 
+  group_by(urban_rural) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+data_clean %>% 
+  group_by(household_type) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+data_clean %>% 
+  group_by(tenure) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+data_clean %>% 
+  group_by(greenspace) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
 
 
 ```{r}
@@ -330,44 +419,44 @@ full_data_2019 %>%
          tenure_harm, hhtype_new, rb1:asb1i) %>% 
   mutate(council = case_when(
     council == "T" ~ "Moray",
-  council == "5" ~ "West Lothian",
-  council == "Y" ~ "Renfrewshire",
-  council == "C" ~ "Angus",
-  council == "R" ~ "Inverclyde",
-  council == "U" ~ "North Ayrshire",
-  council == "X" ~ "Perth and Kinross",
-  council == "6" ~ "Eilean Siar",
-  council == "B" ~ "Aberdeenshire",
-  council == "D" ~ "Argyll and Bute",
-  council == "E" ~ "Scottish Borders",
-  council == "H" ~ "Dundee City",
-  council == "1" ~ "South Ayrshire",
-  council == "2" ~ "South Lanarkshire",
-  council == "F" ~ "Clackmannanshire",
-  council == "G" ~ "Dumfries and Galloway",
-  council == "" ~ "",
-  council == "" ~ "",
-  council == "" ~ "",
-Value =   	Label = 
-	Value =   	Label = 
-	Value =   	Label = 
-	Value = Q  	Label = Highland
-	Value = 3  	Label = Stirling
-	Value = A  	Label = Aberdeen City
-	Value = 4  	Label = West Dumbartonshire
-	Value = L  	Label = East Renfrewshire
-	Value = N  	Label = Falkirk
-	Value = K  	Label = East Lothian
-	Value = O  	Label = Fife
-	Value = J  	Label = East Dumbartonshire
-	Value = W  	Label = Orkney
-	Value = P  	Label = Glasgow City
-	Value = Z  	Label = Shetland
-	Value = V  	Label = North Lanarkshire
-	Value = I  	Label = East Ayrshire
-	Value = S  	Label = Midlothian
-	Value = M  	Label = Edinburgh City
-
+    council == "5" ~ "West Lothian",
+    council == "Y" ~ "Renfrewshire",
+    council == "C" ~ "Angus",
+    council == "R" ~ "Inverclyde",
+    council == "U" ~ "North Ayrshire",
+    council == "X" ~ "Perth and Kinross",
+    council == "6" ~ "Eilean Siar",
+    council == "B" ~ "Aberdeenshire",
+    council == "D" ~ "Argyll and Bute",
+    council == "E" ~ "Scottish Borders",
+    council == "H" ~ "Dundee City",
+    council == "1" ~ "South Ayrshire",
+    council == "2" ~ "South Lanarkshire",
+    council == "F" ~ "Clackmannanshire",
+    council == "G" ~ "Dumfries and Galloway",
+    council == "" ~ "",
+    council == "" ~ "",
+    council == "" ~ "",
+    Value =   	Label = 
+      Value =   	Label = 
+      Value =   	Label = 
+      Value = Q  	Label = Highland
+    Value = 3  	Label = Stirling
+    Value = A  	Label = Aberdeen City
+    Value = 4  	Label = West Dumbartonshire
+    Value = L  	Label = East Renfrewshire
+    Value = N  	Label = Falkirk
+    Value = K  	Label = East Lothian
+    Value = O  	Label = Fife
+    Value = J  	Label = East Dumbartonshire
+    Value = W  	Label = Orkney
+    Value = P  	Label = Glasgow City
+    Value = Z  	Label = Shetland
+    Value = V  	Label = North Lanarkshire
+    Value = I  	Label = East Ayrshire
+    Value = S  	Label = Midlothian
+    Value = M  	Label = Edinburgh City
+    
   ))
 ```
 
