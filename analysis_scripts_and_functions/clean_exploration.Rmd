@@ -60,7 +60,9 @@ neighbourhood_rating
 ```
 ```{r}
 neighbourhood_rating %>% 
-  filter(area == "Scotland", measurement == "Percent", gender != "All")
+  filter(area == "Scotland", measurement == "Percent",
+         walking_distance_to_nearest_greenspace != "All", year == 2019) %>% 
+  select(neighbourhood_rating, walking_distance_to_nearest_greenspace, value, score)
 ```
 
 
@@ -705,7 +707,7 @@ create_2019_community_graph(household_type)
 create_2019_community_graph(urban_rural_classification)
 create_2019_community_graph(gender)
 create_2019_community_graph(walking_distance_to_nearest_greenspace)
-ggsave("graphs_and_images/community_and_greenspace.png")
+#ggsave("graphs_and_images/community_and_greenspace.png")
 ```
 
 ```{r}
@@ -744,7 +746,7 @@ create_2019_neighbourhood_graph(household_type)
 create_2019_neighbourhood_graph(urban_rural_classification)
 create_2019_neighbourhood_graph(gender)
 create_2019_neighbourhood_graph(walking_distance_to_nearest_greenspace)
-ggsave("graphs_and_images/neighbourhood_and_greenspace.png")
+#ggsave("graphs_and_images/neighbourhood_and_greenspace.png")
 ```
 
 ```{r}
@@ -767,6 +769,32 @@ neighbourhood_rating %>%
     y = "Percentage of survey responses",
     fill = deparse(substitute(category))
   )
+```
+
+```{r}
+neighbourhood_rating %>% 
+      filter(area == "Scotland", measurement == "Percent",
+             walking_distance_to_nearest_greenspace != "All") %>% 
+      summarise(mean_score = sum(score),
+                .by = c(year, input$variable_input_n)) %>% 
+      ggplot(aes(year, mean_score, colour = get(input$variable_input_n))) +
+      geom_line() +
+      geom_point(size = 5) +
+      scale_x_continuous(breaks = seq(2013, 2019, 1)) +
+      #scale_y_continuous(limits = c(-1, 1)) +
+      geom_vline(xintercept = input$year_input_n,
+                 colour = "black", alpha = 0.5) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            text = element_text(size = 24)) +
+      labs(
+        title = "Neighbourhood Rating Score",
+        x = "Year",
+        y = "Average Score (-1 to 1)",
+        colour = "Classification"
+      )
 ```
 
 
