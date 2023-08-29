@@ -1,0 +1,144 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Libraries
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(rpart)
+library(rpart.plot)
+library(ranger) # random forest
+library(yardstick) # random forest analysis
+library(nnet) # multinomial logistic regression
+```
+
+# Data
+```{r}
+full_2019_responses <- read_csv(here("clean_data/full_2019_responses.csv")) 
+
+data_2019 <- full_2019_responses %>%
+  select(-council) %>% 
+  mutate_if(is.character, as.factor) %>% 
+  mutate(neighbourhood_rating = factor(neighbourhood_rating,
+                                       levels = c("No opinion",
+                                                  "Very poor",
+                                                  "Fairly poor",
+                                                  "Fairly good",
+                                                  "Very good"))) %>% 
+  mutate(simd = factor(simd))
+```
+```{r}
+n_data <- nrow(data_2019)
+
+# create a test sample index
+test_index <- sample(1:n_data, size = n_data * 0.2)
+
+# create test set
+neighbourhood_test  <- slice(data_2019, test_index)
+
+# create training set
+neighbourhood_train <- slice(data_2019, -test_index) %>% 
+  select(-community_belonging)
+```
+
+# Decision tree
+```{r}
+neighbourhood_fit <- rpart(
+  neighbourhood_rating ~ ., 
+  data = neighbourhood_train, 
+  method = "class"
+)
+
+rpart.plot(neighbourhood_fit, 
+           yesno = 2, 
+           fallen.leaves = TRUE, 
+           faclen = 6, 
+           digits = 4)
+```
+
+# Random Forest
+```{r}
+rf_classifier <- ranger(neighbourhood_rating ~ ., 
+                        data = neighbourhood_train, 
+                        importance = "impurity", 
+                        num.trees = 1000, 
+                        mtry = 2, 
+                        min.node.size = 5)
+
+rf_classifier
+```
+```{r}
+importance(rf_classifier) %>% 
+  sort()
+```
+Predictors:
+
+* (Community Belonging)
+* (Council Area)
+
+* SIMD
+* Age
+* Greenspace
+* Tenure
+* Urban / Rural
+* Household type
+* Gender
+* Ethnicity
+
+```{r}
+neighbourhood_pred <- neighbourhood_test %>% 
+  mutate(pred = predict(rf_classifier, data = neighbourhood_test)$predictions,
+         .after = neighbourhood_rating)
+neighbourhood_pred
+```
+
+```{r}
+conf_mat <- neighbourhood_pred %>% 
+  conf_mat(truth = neighbourhood_rating,
+           estimate = pred)
+conf_mat
+```
+```{r}
+accuracy <- neighbourhood_pred %>% 
+  accuracy(truth = neighbourhood_rating, estimate = pred)
+accuracy
+```
+```{r}
+sensitivity <- neighbourhood_pred %>% 
+  sensitivity(truth = neighbourhood_rating, estimate = pred)
+sensitivity
+```
+
+# Logistic Regression
+
+All variables
+```{r}
+neighbourhood_log_reg <- multinom(neighbourhood_rating ~ .,
+                             data = neighbourhood_train)
+neighbourhood_log_reg
+```
+
+```{r}
+summary(neighbourhood_log_reg)
+```
+
+```{r}
+neighbourhood_mod1a <- multinom(neighbourhood_rating ~ greenspace,
+                             data = neighbourhood_train)
+neighbourhood_mod1a
+```
+```{r}
+neighbourhood_mod1b <- multinom(neighbourhood_rating ~ randage,
+                             data = neighbourhood_train)
+neighbourhood_mod1b
+```
+```{r}
+neighbourhood_mod1c <- multinom(neighbourhood_rating ~ simd,
+                             data = neighbourhood_train)
+neighbourhood_mod1c
+```
+
+

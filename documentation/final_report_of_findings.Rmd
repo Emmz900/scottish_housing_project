@@ -130,8 +130,6 @@ To aid analysis each row of the data was given a score based on the percentage o
 - "Very strongly"            1
 
 ## General Community Belonging and Neighbourhood Ratings across Scotland
-
-
 ```{r warning=FALSE}
 ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
   geom_sf() +
