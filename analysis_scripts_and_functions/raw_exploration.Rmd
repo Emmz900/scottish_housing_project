@@ -309,6 +309,7 @@ neighbourhood_rating %>%
 full_data_2019 <- read.delim(here("raw_data/tab/shs2019_social_public.tab"))
 ```
 
+## Cleaning
 ```{r}
 data_small <- full_data_2019 %>% 
   filter(rand_ok == 1) %>% 
@@ -383,7 +384,7 @@ data_clean <- data_small %>%
       commbel == 5 ~ "Don't know"
     )),
     council = factor(council)
-    ) %>% 
+  ) %>% 
   select(-c(hhtype_new, randgender, tenure_harm, greenfar13, rb1, commbel)) %>% 
   as_tibble()
 ```
@@ -405,6 +406,7 @@ data_clean_2 <- data_clean %>%
   select(6:11)
 ```
 
+## Modelling
 ```{r}
 library(rpart)
 library(rpart.plot)
@@ -438,44 +440,256 @@ rpart.plot(neighbourhood_fit,
 
 
 
+## Stats
+```{r}
+data_clean <- read_csv(here("clean_data/full_2019_responses.csv")) %>% 
+  mutate(greenspace = factor(greenspace, levels = c("Don't know",
+                  "5 mins or less",
+                  "6-10 mins",
+                  "11-20 mins",
+                  "21-30 mins",
+                  "More than 30")))
+```
+```{r}
+plot_demographic_dist <- function(category){
+  data_clean %>% 
+  filter(council %in% c("Eilean Siar", "Orkney", "Shetland", "East Renfrewshire",
+                        "Highland", "Dundee City", "Aberdeen City", "Glasgow City",
+                        "West Dunbartonshire", "Clackmannanshire")) %>% 
+  mutate(top_bottom = case_when(
+    council %in% c("Eilean Siar", "Orkney", "Shetland",
+                   "East Renfrewshire", "Highland") ~ "Top",
+    .default = "Bottom"
+  )) %>% 
+  group_by(council, top_bottom, {{category}}) %>% 
+  summarise(total = n()) %>% 
+  mutate(prop = (prop.table(total))*100) %>%  
+  ggplot(aes({{category}}, prop, fill = council)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~top_bottom) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+```
+
+```{r}
+plot_demographic_dist(ethnicity)
+plot_demographic_dist(gender)
+plot_demographic_dist(tenure)
+plot_demographic_dist(household_type)
+plot_demographic_dist(urban_rural)
+plot_demographic_dist(greenspace)
+plot_demographic_dist(simd)
+```
+```{r}
+data_clean %>% 
+  filter(council %in% c("Eilean Siar", "Orkney", "Shetland", "East Renfrewshire",
+                        "Highland", "Dundee City", "Aberdeen City", "Glasgow City",
+                        "West Dunbartonshire", "Clackmannanshire")) %>% 
+  mutate(top_bottom = case_when(
+    council %in% c("Eilean Siar", "Orkney", "Shetland",
+                   "East Renfrewshire", "Highland") ~ "Top",
+    .default = "Bottom"
+  )) %>% 
+  group_by(top_bottom, council, simd) %>% 
+  summarise(total = n()) %>% 
+  mutate(prop = (prop.table(total))*100) %>% 
+  ggplot(aes(simd, prop, fill = council)) +
+  geom_col(position = "dodge", show.legend = FALSE) +
+  facet_wrap(~top_bottom) +
+  labs(
+    title = "Distribution of SIMD Areas Within\nResponses",
+    subtitle = "SIMD = 1 is the most deprived",
+    fill = "Council Area",
+    y = "Proportion of Responses",
+    x = "SIMD Level"
+  ) +
+  theme_light() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        text = element_text(size = 22))
+ggsave("graphs_and_images/simd_dist.png")
+```
+```{r}
+data_clean %>% 
+  filter(council %in% c("Eilean Siar", "Orkney", "Shetland", "East Renfrewshire",
+                        "Highland", "Dundee City", "Aberdeen City", "Glasgow City",
+                        "West Dunbartonshire", "Clackmannanshire")) %>% 
+  mutate(top_bottom = case_when(
+    council %in% c("Eilean Siar", "Orkney", "Shetland",
+                   "East Renfrewshire", "Highland") ~ "Top",
+    .default = "Bottom"
+  ),
+  tenure = case_when(
+    str_detect(tenure, "Owned") ~ "Owned",
+    .default = tenure
+  )) %>% 
+  group_by(top_bottom, council, tenure) %>% 
+  summarise(total = n()) %>% 
+  mutate(prop = (prop.table(total))*100) %>% 
+  ggplot(aes(tenure, prop, fill = council)) +
+  geom_col(position = "dodge", show.legend = FALSE) +
+  facet_wrap(~top_bottom) +
+  theme_light() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        text = element_text(size = 22)) +
+  labs(
+    title = "Distribution of Tenure Types\nWithin Responses",
+    fill = "Council Area",
+    y = "Proportion of Responses",
+    x = "Tenure Type"
+  )
+ggsave("graphs_and_images/tenure_dist.png")
+```
+```{r}
+data_clean %>% 
+  filter(council %in% c("Eilean Siar", "Orkney", "Shetland", "East Renfrewshire",
+                        "Highland", "Dundee City", "Aberdeen City", "Glasgow City",
+                        "West Dunbartonshire", "Clackmannanshire")) %>% 
+  mutate(top_bottom = case_when(
+    council %in% c("Eilean Siar", "Orkney", "Shetland",
+                   "East Renfrewshire", "Highland") ~ "Top",
+    .default = "Bottom"
+  )) %>% 
+  group_by(top_bottom, council, urban_rural) %>% 
+  summarise(total = n()) %>% 
+  mutate(prop = (prop.table(total))*100) %>% 
+  ggplot(aes(urban_rural, prop, fill = council)) +
+  geom_col(position = "dodge", show.legend = FALSE) +
+  facet_wrap(~top_bottom) +
+  labs(
+    title = "Proportion of Urban and Rural Areas\nWithin Responses",
+    fill = "Council Area",
+    y = "Proportion of Responses",
+    x = ""
+  ) +
+  theme_light() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        text = element_text(size = 22))
+ggsave("graphs_and_images/urban_dist.png")
+```
+
+
+
+```{r}
+plot_demographic_dist(household_type)
+```
+```{r}
+plot_demographic_dist(urban_rural)
+```
+```{r}
+plot_demographic_dist(greenspace)
+```
+
 
 ```{r}
 data_clean %>% 
+  filter(council %in% c("Eilean Siar", "Orkney", "Shetland", "East Renfrewshire",
+                        "Highland", "Dundee City", "Aberdeen City", "Glasgow City",
+                        "West Dunbartonshire", "Clackmannanshire")) %>% 
+  mutate(top_bottom = case_when(
+    council %in% c("Eilean Siar", "Orkney", "Shetland",
+                   "East Renfrewshire", "Highland") ~ "Top",
+    .default = "Bottom"
+  )) %>% 
+  group_by(council, top_bottom, simd) %>% 
+  summarise(prop = (n()/nrow(data_clean))*100) %>% 
+  ggplot(aes(simd, prop, fill = top_bottom)) +
+  geom_col() +
+  facet_wrap(~council)
+```
+
+
+
+
+
+
+```{r}
+scotland_ethnicity <- data_clean %>% 
   group_by(ethnicity) %>% 
   summarise(n(),
             prop = (n()/nrow(data_clean))*100)
 ```
 ```{r}
-data_clean %>% 
+scotland_simd <- data_clean %>% 
   group_by(simd) %>% 
   summarise(n(),
             prop = (n()/nrow(data_clean))*100)
 ```
 ```{r}
-data_clean %>% 
+scotland_urban <- data_clean %>% 
   group_by(urban_rural) %>% 
   summarise(n(),
             prop = (n()/nrow(data_clean))*100)
 ```
 ```{r}
-data_clean %>% 
+scotland_household <- data_clean %>% 
   group_by(household_type) %>% 
   summarise(n(),
             prop = (n()/nrow(data_clean))*100)
 ```
 ```{r}
-data_clean %>% 
+scotland_tenure <- data_clean %>% 
   group_by(tenure) %>% 
   summarise(n(),
             prop = (n()/nrow(data_clean))*100)
 ```
 ```{r}
-data_clean %>% 
+scotland_greenspace <- data_clean %>% 
   group_by(greenspace) %>% 
   summarise(n(),
             prop = (n()/nrow(data_clean))*100)
 ```
 
+```{r}
+data_clean %>% 
+  group_by(council, simd) %>% 
+  summarise(prop = (n()/nrow(data_clean))*100) %>% 
+  ggplot(aes(simd, prop)) +
+  geom_col() +
+  facet_wrap(~council)
+```
+
+## Orkney
+```{r}
+orkney_ethnicity <- data_clean %>% 
+  filter(area == "Orkney Islands") %>% 
+  group_by(ethnicity) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+scotland_simd <- data_clean %>% 
+  group_by(simd) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+scotland_urban <- data_clean %>% 
+  group_by(urban_rural) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+scotland_household <- data_clean %>% 
+  group_by(household_type) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+scotland_tenure <- data_clean %>% 
+  group_by(tenure) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
+```{r}
+scotland_greenspace <- data_clean %>% 
+  group_by(greenspace) %>% 
+  summarise(n(),
+            prop = (n()/nrow(data_clean))*100)
+```
 
 ```{r}
 full_data_2019 %>% 
@@ -499,29 +713,22 @@ full_data_2019 %>%
     council == "2" ~ "South Lanarkshire",
     council == "F" ~ "Clackmannanshire",
     council == "G" ~ "Dumfries and Galloway",
-    council == "" ~ "",
-    council == "" ~ "",
-    council == "" ~ "",
-    Value =   	Label = 
-      Value =   	Label = 
-      Value =   	Label = 
-      Value = Q  	Label = Highland
-    Value = 3  	Label = Stirling
-    Value = A  	Label = Aberdeen City
-    Value = 4  	Label = West Dumbartonshire
-    Value = L  	Label = East Renfrewshire
-    Value = N  	Label = Falkirk
-    Value = K  	Label = East Lothian
-    Value = O  	Label = Fife
-    Value = J  	Label = East Dumbartonshire
-    Value = W  	Label = Orkney
-    Value = P  	Label = Glasgow City
-    Value = Z  	Label = Shetland
-    Value = V  	Label = North Lanarkshire
-    Value = I  	Label = East Ayrshire
-    Value = S  	Label = Midlothian
-    Value = M  	Label = Edinburgh City
-    
+    council == "Q" ~ "Highland",
+    council == "3" ~ "Stirling",
+    council == "A" ~ "Aberdeen City",
+    council == "4" ~ "West Dumbartonshire",
+    council == "L" ~ "East Renfrewshire",
+    council == "N" ~ "Falkirk",
+    council == "K" ~ "East Lothian",
+    council == "O" ~ "Fife",
+    council == "J" ~ "East Dumbartonshire",
+    council == "W" ~ "Orkney",
+    council == "P" ~ "Glasgow City",
+    council == "Z" ~ "Shetland",
+    council == "V" ~ "North Lanarkshire",
+    council == "I" ~ "East Ayrshire",
+    council == "S" ~ "Midlothian",
+    council == "M" ~ "Edinburgh City"
   ))
 ```
 

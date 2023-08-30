@@ -46,9 +46,15 @@ neighbourhood_train <- slice(data_2019, -test_index) %>%
 
 # Decision tree
 ```{r}
+neighbourhood_tree_train <- neighbourhood_train %>% 
+  mutate(neighbourhood_rating = factor(case_when(
+    neighbourhood_rating %in% c("Very good", "Fairly good") ~ "Positive",
+    neighbourhood_rating %in% c("Very poor", "Fairly poor", "No opinion") ~ "Negative"
+  )))
+
 neighbourhood_fit <- rpart(
   neighbourhood_rating ~ ., 
-  data = neighbourhood_train, 
+  data = neighbourhood_tree_train, 
   method = "class"
 )
 

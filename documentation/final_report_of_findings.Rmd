@@ -105,6 +105,10 @@ The options given for the response were:
   (4) Not at all strongly
   Don't know Spontaneous"
 
+https://nationalperformance.gov.scot/national-outcomes/communities#:~:text=Our%20communities%20are%20shaped%20by,all%20who%20live%20in%20them.
+https://www.gov.scot/policies/community-empowerment/
+https://www.gov.scot/publications/local-living-20-minute-neighbourhoods-planning-guidance/pages/4/#:~:text=Local%20living%20and%2020%20minute%20neighbourhoods%20has%20an%20important%20role,and%20spaces%20for%20public%20life.
+
 ## Ethics
 
 Since the results come from a random selection of the general population they may not be entirely representative. People that are not in private accommodation (eg. prisons, hospitals, student accommodation) will not be represented. Neither will those who refused to participate in the survey. This could lead to some bias in the results.
