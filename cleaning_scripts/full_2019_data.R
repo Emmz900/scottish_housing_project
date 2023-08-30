@@ -54,7 +54,12 @@ data_clean <- data_small %>%
       greenfar13 == 4 ~ "21-30 mins",
       greenfar13 == 5 ~ "More than 30",
       greenfar13 == 6 ~ "Don't know"
-    )),
+    ), levels = c("Don't know",
+                  "5 mins or less",
+                  "6-10 mins",
+                  "11-20 mins",
+                  "21-30 mins",
+                  "More than 30")),
     urban_rural = factor(case_when(
       urban_rural == 1 ~ "Urban",
       urban_rural == 2 ~ "Rural"
@@ -73,7 +78,40 @@ data_clean <- data_small %>%
       commbel == 4 ~ "Not at all strongly",
       commbel == 5 ~ "Don't know"
     )),
-    council = factor(council)
+    council = factor(case_when(
+      council == "T" ~ "Moray",
+      council == "5" ~ "West Lothian",
+      council == "Y" ~ "Renfrewshire",
+      council == "C" ~ "Angus",
+      council == "R" ~ "Inverclyde",
+      council == "U" ~ "North Ayrshire",
+      council == "X" ~ "Perth and Kinross",
+      council == "6" ~ "Eilean Siar",
+      council == "B" ~ "Aberdeenshire",
+      council == "D" ~ "Argyll and Bute",
+      council == "E" ~ "Scottish Borders",
+      council == "H" ~ "Dundee City",
+      council == "1" ~ "South Ayrshire",
+      council == "2" ~ "South Lanarkshire",
+      council == "F" ~ "Clackmannanshire",
+      council == "G" ~ "Dumfries and Galloway",
+      council == "Q" ~ "Highland",
+      council == "3" ~ "Stirling",
+      council == "A" ~ "Aberdeen City",
+      council == "4" ~ "West Dumbartonshire",
+      council == "L" ~ "East Renfrewshire",
+      council == "N" ~ "Falkirk",
+      council == "K" ~ "East Lothian",
+      council == "O" ~ "Fife",
+      council == "J" ~ "East Dumbartonshire",
+      council == "W" ~ "Orkney",
+      council == "P" ~ "Glasgow City",
+      council == "Z" ~ "Shetland",
+      council == "V" ~ "North Lanarkshire",
+      council == "I" ~ "East Ayrshire",
+      council == "S" ~ "Midlothian",
+      council == "M" ~ "Edinburgh City"
+    ))
   ) %>% 
   select(-c(hhtype_new, randgender, tenure_harm, greenfar13, rb1, commbel))
 
