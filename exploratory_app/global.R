@@ -32,6 +32,7 @@ optional_variables <- c("gender", "urban_rural_classification", "simd_quintiles"
 ui <- fluidPage(
   tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"), # removes minor tick marks from year slider
   tabsetPanel(type = "tabs",
+              
               # Neighbourhood Rating tab ----------------
               tabPanel(tags$h1("Neighbourhood Rating"),
                        fluidRow(
@@ -65,6 +66,7 @@ ui <- fluidPage(
                          plotOutput("percentage_plot_n")
                        )
               ),
+              
               # Community Belonging tab -----------
               tabPanel(tags$h1("Community Belonging"),
                        fluidRow(
@@ -97,7 +99,17 @@ ui <- fluidPage(
                        fluidRow(
                          plotOutput("percentage_plot_c")
                        )
-              )
+              ),
+              
+              # Overview Tab -----------------------
+              tabPanel(tags$h1("Overview"),
+                       fluidRow(
+                         tags$h2("Background"),
+                         "This shiny app was created to aid with data exploration during my final project of the CodeClan Professional Data Analysis course.\n",
+                         "The project was to explore the factors impacting neighbourhood ratings and community belonging in Scotland, 
+                         using data from the Scottish Household Survey.\n",
+                         "The Scottish Household Survey is....."
+                       ))
   )
 )
 
