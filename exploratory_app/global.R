@@ -86,28 +86,17 @@ ui <- fluidPage(
                          fluidRow(
                            column(
                              width = 4,
-                             plotOutput("gender_plot")
-                           ),
-                           column(
-                             width = 4,
-                             plotOutput("urban_plot")
-                           ),
-                           column(
-                             width = 4,
-                             plotOutput("simd_plot")
-                           )
-                         ),
-                         fluidRow(
-                           column(
-                             width = 4,
+                             plotOutput("gender_plot"),
                              plotOutput("house_plot")
                            ),
                            column(
                              width = 4,
+                             plotOutput("urban_plot"),
                              plotOutput("tenure_plot")
                            ),
                            column(
                              width = 4,
+                             plotOutput("simd_plot"),
                              plotOutput("green_plot")
                            )
                          )
@@ -184,7 +173,27 @@ ui <- fluidPage(
               
               # Map tab -------------
               tabPanel(tags$h1("Maps"),
-                       plotOutput("community_map")
+                       fluidRow(
+                         column(
+                           width = 3,
+                           plotOutput("neighbourhood_map"),
+                           plotOutput("neighbourhood_change")
+                         ),
+                         column(
+                           width = 3,
+                           #table of top/bottom areas
+                         ),
+                         column(
+                           width = 3,
+                           plotOutput("community_map"),
+                           plotOutput("community_change")
+                         ),
+                         column(
+                           width = 3,
+                           #table of top/bottom areas
+                         ),
+                       )
+                       
               )
   )
 )
@@ -320,6 +329,20 @@ server <- function(input, output, session) {
   })
   
   ## Maps ------------------------
+  output$neighbourhood_map <- renderPlot({
+    ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
+      geom_sf() +
+      scale_fill_distiller(palette = "PuBu", direction = 1) +
+      theme_minimal() +
+      theme(axis.text = element_blank(),
+            panel.grid = element_blank()) +
+      labs(
+        title = "Average Neighbourhood Ratings",
+        subtitle = "Scale is -1 to 1",
+        fill = "Score"
+      )
+  })
+  
   output$community_map <- renderPlot({
     ggplot(spatial_community_joined, aes(fill = score)) +
       geom_sf() +
@@ -333,6 +356,35 @@ server <- function(input, output, session) {
         fill = "Score"
       )
   })
+  
+  output$neighbourhood_change <- renderPlot({
+    ggplot(spatial_neighbourhood_joined, aes(fill = diff)) +
+      geom_sf() +
+      scale_fill_gradient2(low = "#e9a3c9", mid = "#f7f7f7", high = "#a1d76a") +
+      theme_minimal() +
+      theme(axis.text = element_blank(),
+            panel.grid = element_blank()) +
+      labs(
+        title = "Change in Neighbourhood Ratings",
+        subtitle = "2013-2019",
+        fill = "Change"
+      )
+  })
+  
+  output$community_change <- renderPlot({
+    ggplot(spatial_community_joined, aes(fill = diff)) +
+      geom_sf() +
+      scale_fill_gradient2(low = "#e9a3c9", mid = "#f7f7f7", high = "#a1d76a") +
+      theme_minimal() +
+      theme(axis.text = element_blank(),
+            panel.grid = element_blank()) +
+      labs(
+        title = "Change in Community Belonging",
+        subtitle = "2013-2019",
+        fill = "Change"
+      )
+  })
+  
 }
 
 shinyApp(ui, server)
