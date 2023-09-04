@@ -174,7 +174,7 @@ ui <- fluidPage(
               # Map tab -------------
               tabPanel(tags$h1("Maps"),
                        fluidRow(
-                         ## neighbourhood column -----
+                         ## neighbourhood  -----
                          column(
                            width = 3,
                            plotOutput("neighbourhood_map"),
@@ -187,10 +187,12 @@ ui <- fluidPage(
                            tags$h2("Bottom 5"),
                            tableOutput("neighbourhood_bottom")
                          ),
+                         ## community ----------
                          column(
                            width = 3,
                            plotOutput("community_map"),
                          ),
+                         ## community tables -------
                          column(
                            width = 3,
                            tags$h2("Top 5"),
@@ -205,19 +207,20 @@ ui <- fluidPage(
                            width = 3,
                            plotOutput("neighbourhood_change")
                          ),
-                         
+                         ## neighbourhood change tables --------
                          column(
                            width = 3,
-                           tags$h2("Top 5"),
-                           tableOutput("neighbourhood_top"),
-                           tags$h2("Bottom 5"),
-                           tableOutput("neighbourhood_bottom")
+                           tags$h2("Largest Increase"),
+                           tableOutput("neighbourhood_change_top"),
+                           tags$h2("Largest Decrease"),
+                           tableOutput("neighbourhood_change_bottom")
                          ),
-                         ##
+                         ## community change ---------
                          column(
                            width = 3,
                            plotOutput("community_change")
                          ),
+                         ## community change tables --------
                          column(
                            width = 3,
                            tags$h2("Largest Increase"),
@@ -425,7 +428,7 @@ server <- function(input, output, session) {
       group_by(area) %>% 
       summarise(avg_score = mean(total_score)) %>% 
       slice_max(avg_score, n = 5) %>% 
-      rename("Average COmmunity Belonging" = avg_score) %>% 
+      rename("Average Community Belonging" = avg_score) %>% 
       rename("Council Area" = area)
   })
   
@@ -437,7 +440,7 @@ server <- function(input, output, session) {
       group_by(area) %>% 
       summarise(avg_score = mean(total_score)) %>% 
       slice_min(avg_score, n = 5) %>% 
-      rename("Average COmmunity Belonging" = avg_score) %>% 
+      rename("Average Community Belonging" = avg_score) %>% 
       rename("Council Area" = area)
   })
   
@@ -457,6 +460,26 @@ server <- function(input, output, session) {
       )
   })
   
+  output$neighbourhood_change_top <- renderTable({
+    spatial_neighbourhood %>% 
+      as.data.frame() %>% 
+      select(local_auth, diff) %>% 
+      slice_max(diff, n = 5) %>% 
+      mutate(diff = diff * 100) %>% 
+      rename("Change" = diff) %>% 
+      rename("Council Area" = local_auth)
+  })
+  
+  output$neighbourhood_change_bottom <- renderTable({
+    spatial_neighbourhood %>% 
+      as.data.frame() %>% 
+      select(local_auth, diff) %>% 
+      slice_min(diff, n = 5) %>% 
+      mutate(diff = diff * 100) %>% 
+      rename("Change" = diff) %>% 
+      rename("Council Area" = local_auth)
+  })
+  
   ## Community change ------------
   output$community_change <- renderPlot({
     ggplot(spatial_community_joined, aes(fill = diff)) +
@@ -473,7 +496,7 @@ server <- function(input, output, session) {
   })
   
   output$community_change_top <- renderTable({
-    spatial_community_joined %>% 
+    spatial_community %>% 
       as.data.frame() %>% 
       select(local_auth, diff) %>% 
       slice_max(diff, n = 5) %>% 
@@ -483,7 +506,7 @@ server <- function(input, output, session) {
   })
   
   output$community_change_bottom <- renderTable({
-    spatial_community_joined %>% 
+    spatial_community %>% 
       as.data.frame() %>% 
       select(local_auth, diff) %>% 
       slice_min(diff, n = 5) %>% 
