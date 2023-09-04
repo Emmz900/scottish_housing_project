@@ -4,6 +4,7 @@ library(here)
 
 # Functions -------------
 source(here("analysis_scripts_and_functions/create_2019_graph.R"))
+source(here("analysis_scripts_and_functions/plot_scores.R"))
 
 # Data --------------
 community_belonging <- read_csv(here("clean_data/community_belonging.csv"))  %>% 
@@ -21,6 +22,46 @@ neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>
                                                   "No opinion",
                                                   "Fairly good",
                                                   "Very good")))
+
+data_2019 <- read_csv(here("clean_data/full_2019_responses.csv")) %>% 
+  mutate(greenspace = factor(greenspace, levels = c(
+    "5 mins or less",
+    "6-10 mins",
+    "11-20 mins",
+    "21-30 mins",
+    "More than 30",
+    "Don't know")),
+    community_belonging = factor(community_belonging, 
+                                 levels = c("Don't know",
+                                            "Not at all strongly", 
+                                            "Not very strongly",
+                                            "Fairly strongly",
+                                            "Very strongly")),
+    community_score = case_when(
+      community_belonging == "Don't know" ~ 0,
+      community_belonging == "Not at all strongly" ~ 1,
+      community_belonging == "Not very strongly" ~ 2,
+      community_belonging == "Fairly strongly" ~ 3,
+      community_belonging == "Very strongly" ~ 4
+    ),
+    simd = factor(simd)
+  ) %>% 
+  mutate(across(where(is.character), as.factor))
+
+council_boundaries <- st_read(
+  dsn = here("clean_data/map_data/"),
+  layer = "pub_las")
+
+spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv")) 
+
+spatial_neighbourhood_joined <- council_boundaries %>% 
+  right_join(spatial_neighbourhood, by = join_by(code == feature_code))
+
+spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
+
+spatial_community_joined <- council_boundaries %>% 
+  right_join(spatial_community, by = join_by(code == feature_code))
+
 # Lists ------------------
 areas <- sort(unique(community_belonging$area))
 years <- sort(unique(neighbourhood_rating$year))
@@ -32,6 +73,46 @@ optional_variables <- c("gender", "urban_rural_classification", "simd_quintiles"
 ui <- fluidPage(
   tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"), # removes minor tick marks from year slider
   tabsetPanel(type = "tabs",
+              # Overview Tab -----------------------
+              tabPanel(tags$h1("Overview"),
+                       fluidRow(
+                         tags$h2("Background"),
+                         "This shiny app was created to aid with data exploration during my final project of the CodeClan Professional Data Analysis course.\n",
+                         "The project was to explore the factors impacting neighbourhood ratings and community belonging in Scotland, 
+                         using data from the Scottish Household Survey.\n",
+                         "The Scottish Household Survey is an annual, cross-sectional survey of a random selection of people in private residences across Scotland.\n",
+                         br(),
+                         tags$h2("Findings"),
+                         fluidRow(
+                           column(
+                             width = 4,
+                             plotOutput("gender_plot")
+                           ),
+                           column(
+                             width = 4,
+                             plotOutput("urban_plot")
+                           ),
+                           column(
+                             width = 4,
+                             plotOutput("simd_plot")
+                           )
+                         ),
+                         fluidRow(
+                           column(
+                             width = 4,
+                             plotOutput("house_plot")
+                           ),
+                           column(
+                             width = 4,
+                             plotOutput("tenure_plot")
+                           ),
+                           column(
+                             width = 4,
+                             plotOutput("green_plot")
+                           )
+                         )
+                       )
+              ),
               
               # Neighbourhood Rating tab ----------------
               tabPanel(tags$h1("Neighbourhood Rating"),
@@ -101,26 +182,42 @@ ui <- fluidPage(
                        )
               ),
               
-              # Overview Tab -----------------------
-              tabPanel(tags$h1("Overview"),
-                       fluidRow(
-                         tags$h2("Background"),
-                         "This shiny app was created to aid with data exploration during my final project of the CodeClan Professional Data Analysis course.\n",
-                         "The project was to explore the factors impacting neighbourhood ratings and community belonging in Scotland, 
-                         using data from the Scottish Household Survey.\n",
-                         "The Scottish Household Survey is....."
-                       ))
+              # Map tab -------------
+              tabPanel(tags$h1("Maps"),
+                       plotOutput("community_map")
+              )
   )
 )
 
 # Server ------------------
 server <- function(input, output, session) {
   
-  # variable_n <- reactive({
-  #   str_to_lower(get(input$variable_input_n)) %>% 
-  #   str_replace_all(" ", "_")
-  #   })
+  ## Summary plots ----------------
+  output$gender_plot <- renderPlot({
+    plot_scores(gender, "Gender")
+  })
   
+  output$urban_plot <- renderPlot({
+    plot_scores(urban_rural, "Urban or Rural")
+  })
+  
+  output$simd_plot <- renderPlot({
+    plot_scores(simd, "SIMD")
+  })
+  
+  output$house_plot <- renderPlot({
+    plot_scores(household_type, "Household Type")
+  })
+  
+  output$tenure_plot <- renderPlot({
+    plot_scores(tenure, "Type of Tenure")
+  })
+  
+  output$green_plot <- renderPlot({
+    plot_scores(greenspace, "Distance to Greenspace")
+  })
+  
+  ## Neighbourhood plots --------------------
   output$score_plot_n <- renderPlot({
     neighbourhood_rating %>% 
       filter(area == input$area_input_n, measurement == "Percent",
@@ -147,7 +244,7 @@ server <- function(input, output, session) {
       )
   })
   
-    output$percentage_plot_n <- renderPlot({
+  output$percentage_plot_n <- renderPlot({
     neighbourhood_rating %>% 
       filter(area == input$area_input_n, measurement == "Percent",
              get(input$variable_input_n) != "All",
@@ -170,12 +267,8 @@ server <- function(input, output, session) {
         fill = "Classification"
       )
   })
-    
-    # variable_c <- reactive({
-    #   str_to_lower(input$variable_input_c) %>% 
-    #   str_replace_all(" ", "_")
-    # }) 
   
+  ## Community plots -----------------
   output$score_plot_c <- renderPlot({
     community_belonging %>% 
       filter(area == input$area_input_c, measurement == "Percent",
@@ -223,6 +316,21 @@ server <- function(input, output, session) {
         x = "Community Belonging",
         y = "Percentage of survey responses",
         fill = "Classification"
+      )
+  })
+  
+  ## Maps ------------------------
+  output$community_map <- renderPlot({
+    ggplot(spatial_community_joined, aes(fill = score)) +
+      geom_sf() +
+      scale_fill_distiller(palette = "PuBu", direction = 1) +
+      theme_minimal() +
+      theme(axis.text = element_blank(),
+            panel.grid = element_blank()) +
+      labs(
+        title = "Average Community Belonging",
+        subtitle = "Scale is -1 to 1",
+        fill = "Score"
       )
   })
 }

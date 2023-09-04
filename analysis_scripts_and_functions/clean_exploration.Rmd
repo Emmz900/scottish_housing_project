@@ -1016,3 +1016,49 @@ neighbourhood <- neighbourhood_rating %>%
     facet_grid(rating_type~gender)
 ```
 
+# Leaflet
+```{r}
+library(rgdal)  #  Geospatial Data Abstraction Library functions
+library(geojsonio)  # deal with json file
+library(sp)  # deal with spatial data
+library(leaflet)
+library(tidyverse)
+```
+
+```{r}
+community_belonging <- read_csv(here("clean_data/community_belonging.csv")) %>% 
+  mutate(community_belonging = factor(community_belonging, 
+                                      levels = c("Not at all strongly", 
+                                                 "Not very strongly",
+                                                 "Don't know",
+                                                 "Fairly strongly",
+                                                 "Very strongly")))
+
+neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>% 
+  mutate(neighbourhood_rating = factor(neighbourhood_rating, 
+                                      levels = c("Very poor", 
+                                                 "Fairly poor",
+                                                 "No opinion",
+                                                 "Fairly good",
+                                                 "Very good")))
+
+council_boundaries <- st_read(
+  dsn = here("clean_data/map_data/"),
+  layer = "pub_las")
+
+spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv")) 
+
+spatial_neighbourhood_joined <- council_boundaries %>% 
+   right_join(spatial_neighbourhood, by = join_by(code == feature_code))
+
+spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
+
+spatial_community_joined <- council_boundaries %>% 
+   right_join(spatial_community, by = join_by(code == feature_code))
+```
+```{r}
+leaflet(council_boundaries) %>% 
+  addPolygons()
+```
+
+

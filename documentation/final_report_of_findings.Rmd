@@ -146,7 +146,7 @@ ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
     subtitle = "Scale is -1 to 1",
     fill = "Score"
   )
-ggsave("neighbourhood_map.png")
+#ggsave("neighbourhood_map.png")
 ```
 
 ```{r}
@@ -161,7 +161,7 @@ ggplot(spatial_community_joined, aes(fill = score)) +
     subtitle = "Scale is -1 to 1",
     fill = "Score"
   )
-ggsave("community_map.png")
+#ggsave("community_map.png")
 ```
 
 ## Top Rated Areas

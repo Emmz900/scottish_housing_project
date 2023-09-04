@@ -1,0 +1,89 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Libraries
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+```
+# Data
+```{r}
+data_2019 <- read_csv(here("clean_data/full_2019_responses.csv")) %>% 
+  mutate(greenspace = factor(greenspace, levels = c(
+                                                    "5 mins or less",
+                                                    "6-10 mins",
+                                                    "11-20 mins",
+                                                    "21-30 mins",
+                                                    "More than 30",
+                                                    "Don't know")),
+         community_belonging = factor(community_belonging, 
+                                      levels = c("Don't know",
+                                                 "Not at all strongly", 
+                                                 "Not very strongly",
+                                                 "Fairly strongly",
+                                                 "Very strongly")),
+         community_score = case_when(
+           community_belonging == "Don't know" ~ 0,
+           community_belonging == "Not at all strongly" ~ 1,
+           community_belonging == "Not very strongly" ~ 2,
+           community_belonging == "Fairly strongly" ~ 3,
+           community_belonging == "Very strongly" ~ 4
+         ),
+         simd = factor(simd)
+  ) %>% 
+  mutate(across(where(is.character), as.factor))
+```
+
+```{r}
+data_2019
+```
+
+```{r warning=FALSE}
+data_2019 %>% 
+  group_by(council, simd) %>% 
+  summarise(average_score = mean(community_score),
+            total = n()) %>% 
+  ggplot(aes(simd, average_score)) +
+  geom_boxplot() +
+  theme_light()
+```
+
+```{r warning=FALSE}
+plot_scores <- function(category, title_wording = "Average Community Belonging"){
+  data_2019 %>% 
+    group_by(council, {{category}}) %>% 
+    summarise(average_score = mean(community_score)) %>% 
+    ggplot(aes({{category}}, average_score)) +
+    geom_boxplot() +
+    theme_light() +
+    labs(
+      title = str_c("Community Belonging by ", title_wording),
+      y = "Average Community Belonging Score",
+      x = title_wording
+    )
+}
+```
+
+```{r}
+plot_scores(simd, "SIMD")
+plot_scores(urban_rural, "Urban or Rural")
+plot_scores(household_type, "Household Type")
+plot_scores(gender, "Gender")
+plot_scores(tenure, "Type of Tenure")
+plot_scores(greenspace, "Distance to Greenspace")
+```
+```{r}
+data_2019 %>% 
+  group_by(tenure) %>% 
+  summarise(n())
+```
+
+```{r}
+105/(3684 + 2506 + 105 + 3436)
+```
+
+
+
