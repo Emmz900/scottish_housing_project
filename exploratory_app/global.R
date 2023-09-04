@@ -174,23 +174,56 @@ ui <- fluidPage(
               # Map tab -------------
               tabPanel(tags$h1("Maps"),
                        fluidRow(
+                         ## neighbourhood column -----
                          column(
                            width = 3,
                            plotOutput("neighbourhood_map"),
-                           plotOutput("neighbourhood_change")
                          ),
+                         ## neighbourhood tables ------------
                          column(
                            width = 3,
-                           #table of top/bottom areas
+                           tags$h2("Top 5"),
+                           tableOutput("neighbourhood_top"),
+                           tags$h2("Bottom 5"),
+                           tableOutput("neighbourhood_bottom")
                          ),
                          column(
                            width = 3,
                            plotOutput("community_map"),
+                         ),
+                         column(
+                           width = 3,
+                           tags$h2("Top 5"),
+                           tableOutput("community_top"),
+                           tags$h2("Bottom 5"),
+                           tableOutput("community_bottom")
+                         ),
+                       ),
+                       fluidRow(
+                         ## neighbourhood change -----
+                         column(
+                           width = 3,
+                           plotOutput("neighbourhood_change")
+                         ),
+                         
+                         column(
+                           width = 3,
+                           tags$h2("Top 5"),
+                           tableOutput("neighbourhood_top"),
+                           tags$h2("Bottom 5"),
+                           tableOutput("neighbourhood_bottom")
+                         ),
+                         ##
+                         column(
+                           width = 3,
                            plotOutput("community_change")
                          ),
                          column(
                            width = 3,
-                           #table of top/bottom areas
+                           tags$h2("Largest Increase"),
+                           tableOutput("community_change_top"),
+                           tags$h2("Largest Decrease"),
+                           tableOutput("community_change_bottom")
                          ),
                        )
                        
@@ -329,6 +362,8 @@ server <- function(input, output, session) {
   })
   
   ## Maps ------------------------
+  
+  ### Neighbourhood -------------
   output$neighbourhood_map <- renderPlot({
     ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
       geom_sf() +
@@ -343,6 +378,31 @@ server <- function(input, output, session) {
       )
   })
   
+  output$neighbourhood_top <- renderTable({
+    neighbourhood_rating %>% 
+      filter(measurement == "Percent", gender != "All") %>% 
+      group_by(feature_code, area, year, gender) %>% 
+      summarise(total_score = sum(score)) %>% 
+      group_by(area) %>% 
+      summarise(avg_neighbourhood_score = mean(total_score)) %>% 
+      slice_max(avg_neighbourhood_score, n = 5) %>% 
+      rename("Average Neighbourhood Rating" = avg_neighbourhood_score) %>% 
+      rename("Council Area" = area)
+  })
+  
+  output$neighbourhood_bottom <- renderTable({
+    neighbourhood_rating %>% 
+      filter(measurement == "Percent", gender != "All") %>% 
+      group_by(feature_code, area, year, gender) %>% 
+      summarise(total_score = sum(score)) %>% 
+      group_by(area) %>% 
+      summarise(avg_neighbourhood_score = mean(total_score)) %>% 
+      slice_min(avg_neighbourhood_score, n = 5) %>% 
+      rename("Average Neighbourhood Rating" = avg_neighbourhood_score) %>% 
+      rename("Council Area" = area)
+  })
+  
+  ## Community ---------------
   output$community_map <- renderPlot({
     ggplot(spatial_community_joined, aes(fill = score)) +
       geom_sf() +
@@ -356,6 +416,32 @@ server <- function(input, output, session) {
         fill = "Score"
       )
   })
+  
+  output$community_top <- renderTable({
+    community_belonging %>% 
+      filter(measurement == "Percent", gender != "All") %>% 
+      group_by(feature_code, area, year, gender) %>% 
+      summarise(total_score = sum(score)) %>% 
+      group_by(area) %>% 
+      summarise(avg_score = mean(total_score)) %>% 
+      slice_max(avg_score, n = 5) %>% 
+      rename("Average COmmunity Belonging" = avg_score) %>% 
+      rename("Council Area" = area)
+  })
+  
+  output$community_bottom <- renderTable({
+    community_belonging %>% 
+      filter(measurement == "Percent", gender != "All") %>% 
+      group_by(feature_code, area, year, gender) %>% 
+      summarise(total_score = sum(score)) %>% 
+      group_by(area) %>% 
+      summarise(avg_score = mean(total_score)) %>% 
+      slice_min(avg_score, n = 5) %>% 
+      rename("Average COmmunity Belonging" = avg_score) %>% 
+      rename("Council Area" = area)
+  })
+  
+  ## Neighbourhood change -------------
   
   output$neighbourhood_change <- renderPlot({
     ggplot(spatial_neighbourhood_joined, aes(fill = diff)) +
@@ -371,6 +457,7 @@ server <- function(input, output, session) {
       )
   })
   
+  ## Community change ------------
   output$community_change <- renderPlot({
     ggplot(spatial_community_joined, aes(fill = diff)) +
       geom_sf() +
@@ -383,6 +470,26 @@ server <- function(input, output, session) {
         subtitle = "2013-2019",
         fill = "Change"
       )
+  })
+  
+  output$community_change_top <- renderTable({
+    spatial_community_joined %>% 
+      as.data.frame() %>% 
+      select(local_auth, diff) %>% 
+      slice_max(diff, n = 5) %>% 
+      mutate(diff = diff * 100) %>% 
+      rename("Change" = diff) %>% 
+      rename("Council Area" = local_auth)
+  })
+  
+  output$community_change_bottom <- renderTable({
+    spatial_community_joined %>% 
+      as.data.frame() %>% 
+      select(local_auth, diff) %>% 
+      slice_min(diff, n = 5) %>% 
+      mutate(diff = diff * 100) %>% 
+      rename("Change" = diff) %>% 
+      rename("Council Area" = local_auth)
   })
   
 }

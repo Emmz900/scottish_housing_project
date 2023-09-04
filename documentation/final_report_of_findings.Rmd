@@ -174,7 +174,9 @@ top_10_neighbourhood <- neighbourhood_rating %>%
   summarise(total_score = sum(score)) %>% 
   group_by(area) %>% 
   summarise(avg_neighbourhood_score = mean(total_score)) %>% 
-  slice_max(avg_neighbourhood_score, n = 10)
+  slice_max(avg_neighbourhood_score, n = 10) %>% 
+  rename("Average Neighbourhood Rating" = avg_neighbourhood_score) %>% 
+  rename("Council Area" = area)
 top_10_neighbourhood
 
 top_10_community <- community_belonging %>% 
