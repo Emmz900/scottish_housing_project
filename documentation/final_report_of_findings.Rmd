@@ -68,13 +68,12 @@ This analysis and report will explore the responses given in this survey about n
 ## Data Sources:
 
 * ![2013-2019](https://statistics.gov.scot/resource?uri=http%3A%2F%2Fstatistics.gov.scot%2Fdata%2Fcommunity-belonging---shs)
-* ![2020](https://www.gov.scot/publications/scottish-household-survey-2020-telephone-survey-key-findings/documents/)
-* ![2021](https://www.gov.scot/publications/scottish-household-survey-2021-telephone-survey-key-findings/documents/)
+
 
 ## Key terms
 
 * social rented = (managed by public authorities and housing associations with support from the Scottish Government) ![](https://www.gov.scot/policies/social-housing/)
-* SIMD = Scottish Index of Multiple Depravation
+* SIMD = Scottish Index of Multiple Deprivation
 ![](https://www.gov.scot/collections/scottish-index-of-multiple-deprivation-2020/)
 
 **Neighbourhood rating**
@@ -138,9 +137,10 @@ To aid analysis each row of the data was given a score based on the percentage o
 ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
   geom_sf() +
   scale_fill_distiller(palette = "PuBu", direction = 1) +
+  #coord_sf(xlim = c(1, 100), ylim = c(1, 100)) + 
   theme_minimal() +
-  theme(axis.text = element_blank(),
-        panel.grid = element_blank()) +
+  # theme(axis.text = element_blank(),
+  #       panel.grid = element_blank()) +
   labs(
     title = "Average Neighbourhood Ratings",
     subtitle = "Scale is -1 to 1",
