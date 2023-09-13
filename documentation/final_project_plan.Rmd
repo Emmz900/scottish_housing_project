@@ -103,11 +103,22 @@ It is important to remember that correlation does not mean causation, and care s
 ## Stages in the data analysis process
 
 *What were the main stages in your data analysis process?*
-
+1. Initial exploration of the available data and business questions
+[2. Cleaning the data
+3. Visualisation of the data] x many cycles
+4. Creation of an R Shiny app to delve deeper in exploring patterns
+5. Spatial visualisations of council areas
+6. Statistical analysis of patterns found where relevant
+7. Summarising answers to business questions
 
 ## Tools for data analysis
 
 *What were the main tools you used for your analysis?*
+* R Studio
+- R version 4.2.2
+- R Shiny
+
+* Microsoft Powerpoint for final presentation of analysis
 
 ## Descriptive, diagnostic, predictive and prescriptive analysis
 
@@ -123,6 +134,7 @@ _Please report under which of the below categories your analysis falls **and why
 **Prescriptive Analytics** recommends actions you can take to affect those outcomes.
 :::
 
+This project was mainly descriptive analytics exploring how people have rated their neighbourhoods and communities in the past, how this has changed over time, and how it differs by area and demographic.
 
 # PDA Outcomes
 
