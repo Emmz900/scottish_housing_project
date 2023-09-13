@@ -45,14 +45,42 @@ The Scottish Household Survey is completed annually on behalf of the Scottish Go
 
 *What kind of data did you work with? E.g. categorical and numerical data and their sub-types.*
 
+* Categorical  
+
+- Nominal  
+Rural or urban   
+Council area  
+Tenure  
+Housing Type  
+Gender  
+
+- Ordinal  
+Community Belonging and Neighbourhood Ratings were character strings which had an implied order of worst to best.  
+Access to greenspace had several categories with a given order of closest to furthest.  
+
+* Numerical  
+
+- Discrete 
+The percentage of responses were discrete whole numbers between 0 and 100.  
+SIMD could be considered discrete numerical (1-5) or ordinal.  
+Ages could be considered continuous or discrete. They were given as whole numbers.  
+
+- Continuous  
+None  
 
 ## Data formats
 
 *What format did your data come in? E.g. all downloaded flat files (CSV) or any data from APIs, scraping etc.*
 
+The data was mainly excel or csv, with some spatial tab data.
+
 ## Data quality and bias
 
 *Briefly describe the quality of the data and whether you have any reasons to suggest the data is biased e.g. only data from a specific demographic even though a broader demographic would be of interest to the organisation.*
+
+There will be some bias in the data as only those in private households were surveyed, this excludes student accommodation and hospitals for example.
+
+Some people may refuse to do the survey, if this tends to be people from a particular group or demographic they will also be under represented in the results.
 
 # Ethics
 
@@ -60,19 +88,22 @@ The Scottish Household Survey is completed annually on behalf of the Scottish Go
 
 *Do you have any ethical concerns regarding the sourcing and extraction of your data?* 
 
-Since the results come from a random selection of the general population they may not be entirely representative. People that are not in private accommodation (eg. prisons, hospitals, student accommodation) will not be represented. Neither will those who refused to participate in the survey. This could lead to some bias in the results.
+The aggregated data that is publicly available has no personal identifying information and I therefore have no ethical concerns.
 
-Since the data collected in the survey contains sensitive information, the data publicly available is highly aggregated. This limits the analysis which can be done, but ensures there is no risk of sensitive information of being shared within this report.
+The dataset with the complete responses from 2019 may contain enough information to identify individuals and is therefore protected. Significant cleaning was completed to remove most of the collected information and focus only on the responses relevant to this analysis. The raw data has been excluded from the published repository to ensure privacy.
 
 ## Ethical implications of business requirements
 
 *Are there any ethical implications of the business requirements?*
+
+It is important to remember that correlation does not mean causation, and care should be taken when making assumptions about the results of the analysis. Communities and neighbourhoods are complex and there are many factors not explored here which will be significant for local people.
 
 # Analysis
 
 ## Stages in the data analysis process
 
 *What were the main stages in your data analysis process?*
+
 
 ## Tools for data analysis
 
