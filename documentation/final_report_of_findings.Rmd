@@ -106,8 +106,21 @@ This analysis and report will explore the responses given in this survey about n
 
 ## Data Sources:
 
+**Internal Data**
+
+* Excel file on community belonging, available at `statistics.gov.scot`, ![link](https://statistics.gov.scot/resource?uri=http%3A%2F%2Fstatistics.gov.scot%2Fdata%2Fcommunity-belonging---shs)
+* Excel file on neighbourhood rating, available at `statistics.gov.scot`, ![link](https://statistics.gov.scot/resource?uri=http%3A%2F%2Fstatistics.gov.scot%2Fdata%2Fneighbourhood-rating---shs)
+* Excel file of all 2019 responses, available through UK Data Service, ![link](ukdataservice.ac.uk), *while this was sourced externally, it is data directly from the Scottish Government just shared through a secure site*.
+
+**External Data**
+* Excel file on the council area codes, available from Public Health Scotland at `opendata.nhs.scot`,  ![link](https://www.opendata.nhs.scot/km/dataset/geography-codes-and-labels)
+* Tab data for geographical information on council areas, available from `data.spatialhub.scot`, ![link](https://data.spatialhub.scot/dataset/local_authority_boundaries-is/resource/d24c5735-0f1c-4819-a6bd-dbfeb93bd8e4)
+
+
+FIX!
 * ![2013-2019](https://statistics.gov.scot/resource?uri=http%3A%2F%2Fstatistics.gov.scot%2Fdata%2Fcommunity-belonging---shs)
-* ![Council Boundaries]()
+* ![Council Names](https://www.opendata.nhs.scot/km/dataset/geography-codes-and-labels)
+* ![Council Boundaries](https://data.spatialhub.scot/dataset/local_authority_boundaries-is/resource/d24c5735-0f1c-4819-a6bd-dbfeb93bd8e4)
 * ![2019 responses]()
 
 
@@ -175,7 +188,7 @@ To aid analysis each row of the data was given a score based on the percentage o
 
 ## General Community Belonging and Neighbourhood Ratings across Scotland
 
-### COmmunity Belonging in the Whole of Scotland
+### Community Belonging in the Whole of Scotland
 ```{r}
 data_2019 %>% 
   filter(!is.na(community_belonging)) %>% 
