@@ -144,7 +144,8 @@ server <- function(input, output, session) {
         subtitle = "Scale is -1 to 1",
         fill = "Score"
       )
-  }, height = 520, width = 450)
+  } #, height = 520, width = 450
+  )
   
   output$neighbourhood_top <- renderTable({
     neighbourhood_rating %>% 
@@ -184,7 +185,8 @@ server <- function(input, output, session) {
         subtitle = "Scale is -1 to 1",
         fill = "Score"
       )
-  }, height = 520, width = 450)
+  } #, height = 520, width = 450
+  )
   
   output$community_top <- renderTable({
     community_belonging %>% 
@@ -225,7 +227,8 @@ server <- function(input, output, session) {
         subtitle = "2013-2019",
         fill = "Change"
       )
-  }, height = 520, width = 450)
+  } #, height = 520, width = 450
+  )
   
   output$neighbourhood_change_top <- renderTable({
     spatial_neighbourhood_joined %>%
@@ -261,7 +264,8 @@ server <- function(input, output, session) {
         subtitle = "2013-2019",
         fill = "Change"
       )
-  }, height = 520, width = 450)
+  } #, height = 520, width = 450
+  )
   
   output$community_change_top <- renderTable({
     spatial_community_joined %>%

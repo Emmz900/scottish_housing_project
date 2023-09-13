@@ -19,6 +19,7 @@ library(sf)
 
 ### Data
 ```{r message=FALSE}
+# cleaned community belonging
 community_belonging <- read_csv(here("clean_data/community_belonging.csv")) %>% 
   mutate(community_belonging = factor(community_belonging, 
                                       levels = c("Not at all strongly", 
@@ -27,27 +28,65 @@ community_belonging <- read_csv(here("clean_data/community_belonging.csv")) %>%
                                                  "Fairly strongly",
                                                  "Very strongly")))
 
+# cleaned neighbourhood rating
 neighbourhood_rating <- read_csv(here("clean_data/neighbourhood_rating.csv")) %>% 
   mutate(neighbourhood_rating = factor(neighbourhood_rating, 
-                                      levels = c("Very poor", 
-                                                 "Fairly poor",
-                                                 "No opinion",
-                                                 "Fairly good",
-                                                 "Very good")))
+                                       levels = c("Very poor", 
+                                                  "Fairly poor",
+                                                  "No opinion",
+                                                  "Fairly good",
+                                                  "Very good")))
 
+# geometries of council boundaries in scotland
 council_boundaries <- st_read(
   dsn = here("clean_data/map_data/"),
   layer = "pub_las")
 
+# aggregated neighbourhood rating data
 spatial_neighbourhood <- read_csv(here("clean_data/spatial_neighbourhood.csv")) 
 
+# join with council boundaries
 spatial_neighbourhood_joined <- council_boundaries %>% 
-   right_join(spatial_neighbourhood, by = join_by(code == feature_code))
+  right_join(spatial_neighbourhood, by = join_by(code == feature_code))
 
+# aggregated community belonging data
 spatial_community <- read_csv(here("clean_data/spatial_community.csv"))
 
+# join with council boundaries
 spatial_community_joined <- council_boundaries %>% 
-   right_join(spatial_community, by = join_by(code == feature_code))
+  right_join(spatial_community, by = join_by(code == feature_code))
+
+# full results from 2019 survey
+data_2019 <- read_csv(here("clean_data/full_2019_responses.csv")) %>% 
+  mutate(greenspace = factor(greenspace, levels = c(
+    "5 mins or less",
+    "6-10 mins",
+    "11-20 mins",
+    "21-30 mins",
+    "More than 30",
+    "Don't know")),
+    community_belonging = factor(community_belonging, 
+                                 levels = c("Don't know",
+                                            "Not at all strongly", 
+                                            "Not very strongly",
+                                            "Fairly strongly",
+                                            "Very strongly")),
+    neighbourhood_rating = factor(neighbourhood_rating,
+                                  levels = c("No opinion",
+                                             "Very poor",
+                                             "Fairly poor",
+                                             "Fairly good",
+                                             "Very good")),
+    community_score = case_when(
+      community_belonging == "Don't know" ~ 0,
+      community_belonging == "Not at all strongly" ~ 1,
+      community_belonging == "Not very strongly" ~ 2,
+      community_belonging == "Fairly strongly" ~ 3,
+      community_belonging == "Very strongly" ~ 4
+    ),
+    simd = factor(simd)
+  ) %>% 
+  mutate(across(where(is.character), as.factor))
 ```
 
 ### Functions
@@ -68,6 +107,8 @@ This analysis and report will explore the responses given in this survey about n
 ## Data Sources:
 
 * ![2013-2019](https://statistics.gov.scot/resource?uri=http%3A%2F%2Fstatistics.gov.scot%2Fdata%2Fcommunity-belonging---shs)
+* ![Council Boundaries]()
+* ![2019 responses]()
 
 
 ## Key terms
@@ -86,11 +127,11 @@ streets nearby' (urban) or 'the local area' (rural)."
 
 The options given for the response were:
 >"(1) Very good 
-  (2) Fairly good 
-  (3) Fairly poor 
-  (4) Very poor 
-  No opinion"
-  
+(2) Fairly good 
+(3) Fairly poor 
+(4) Very poor 
+No opinion"
+
 **Community Belonging**
 
 The question asked by the survey is as follows:
@@ -99,10 +140,10 @@ NEIGHBOURHOOD?"
 
 The options given for the response were:
 >"(1) Very strongly
-  (2) Fairly strongly
-  (3) Not very strongly
-  (4) Not at all strongly
-  Don't know Spontaneous"
+(2) Fairly strongly
+(3) Not very strongly
+(4) Not at all strongly
+Don't know Spontaneous"
 
 https://nationalperformance.gov.scot/national-outcomes/communities#:~:text=Our%20communities%20are%20shaped%20by,all%20who%20live%20in%20them.
 https://www.gov.scot/policies/community-empowerment/
@@ -133,22 +174,77 @@ To aid analysis each row of the data was given a score based on the percentage o
 - "Very strongly"            1
 
 ## General Community Belonging and Neighbourhood Ratings across Scotland
-```{r warning=FALSE}
-ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
-  geom_sf() +
-  scale_fill_distiller(palette = "PuBu", direction = 1) +
-  #coord_sf(xlim = c(1, 100), ylim = c(1, 100)) + 
-  theme_minimal() +
-  # theme(axis.text = element_blank(),
-  #       panel.grid = element_blank()) +
+
+### COmmunity Belonging in the Whole of Scotland
+```{r}
+data_2019 %>% 
+  filter(!is.na(community_belonging)) %>% 
+  group_by(community_belonging) %>% 
+  summarise(prop = round(n()/nrow(data_2019)*100, 0)) %>% 
+  ggplot(aes(community_belonging, prop)) +
+  geom_col(fill = "blue") +
+  geom_text(aes(label = paste(prop, "%")),
+            vjust = -1, position = position_dodge(0.9)) +
+  scale_y_continuous(limits = c(0, 47)) +
   labs(
-    title = "Average Neighbourhood Ratings",
-    subtitle = "Scale is -1 to 1",
-    fill = "Score"
-  )
-#ggsave("neighbourhood_map.png")
+    title = "Community Belonging in Scotland 2019",
+    x = "Community Belonging",
+    y = "Proportion of Responses (%)"
+  ) +
+  theme_light() +
+  theme(text = element_text(size = 14))
+```
+Feelings of community belonging are fairly high in Scotland with 80% of people rating it "Fairly" or "Very" strongly.
+
+```{r warning=FALSE}
+plot_scores <- function(category, title_wording = "Average Community Belonging"){
+  data_2019 %>% 
+    group_by(council, {{category}}) %>% 
+    summarise(average_score = mean(community_score)) %>% 
+    ggplot(aes({{category}}, average_score)) +
+    geom_boxplot() +
+    theme_light() +
+    labs(
+      title = str_c("Community Belonging by ", title_wording),
+      y = "Average Community Belonging Score",
+      x = title_wording
+    )
+}
 ```
 
+```{r message=FALSE}
+plot_scores(simd, "SIMD")
+plot_scores(urban_rural, "Urban or Rural")
+plot_scores(household_type, "Household Type")
+plot_scores(gender, "Gender")
+plot_scores(tenure, "Type of Tenure")
+plot_scores(greenspace, "Distance to Greenspace")
+```
+
+EXPLANATION!
+
+### Neighbourhood Ratings in the Whole of Scotland
+```{r}
+data_2019 %>% 
+  filter(!is.na(neighbourhood_rating)) %>% 
+  group_by(neighbourhood_rating) %>% 
+  summarise(prop = round(n()/nrow(data_2019)*100, 0)) %>% 
+  ggplot(aes(neighbourhood_rating, prop)) +
+  geom_col(fill = "blue") +
+  geom_text(aes(label = paste(prop, "%")),
+            vjust = -1, position = position_dodge(0.9))+
+  scale_y_continuous(limits = c(0, 65)) +
+  labs(
+    title = "Neighbourhood Ratings in Scotland 2019",
+    x = "Neighbourhood Ratings",
+    y = "Proportion of Responses (%)"
+  ) +
+  theme_light() +
+  theme(text = element_text(size = 14))
+```
+Neighbourhood ratings are even higher with almost 60% of people rating their local neighbourhood "Very good", and only 5% rating their neighbourhood "Fairly" or "Very" poor.
+
+### Community Belonging Within Council Areas in Scotland
 ```{r}
 ggplot(spatial_community_joined, aes(fill = score)) +
   geom_sf() +
@@ -164,8 +260,58 @@ ggplot(spatial_community_joined, aes(fill = score)) +
 #ggsave("community_map.png")
 ```
 
-## Top Rated Areas
-The highest neighbourhood ratings are found in the Outer Hebrides, Orkney, and Shetland.
+```{r message=FALSE}
+top_10_community <- community_belonging %>% 
+  filter(measurement == "Percent", gender != "All") %>% 
+  group_by(feature_code, area, year, gender) %>% 
+  summarise(total_score = sum(score)) %>% 
+  group_by(area) %>% 
+  summarise(avg_community_score = mean(total_score)) %>% 
+  slice_max(avg_community_score, n = 10) %>% 
+  rename("Best Areas" = area) %>% 
+  rename("Average Community Score" = avg_community_score)
+top_10_community
+
+bottom_10_community <- community_belonging %>% 
+  filter(measurement == "Percent", gender != "All") %>% 
+  group_by(feature_code, area, year, gender) %>% 
+  summarise(total_score = sum(score)) %>% 
+  group_by(area) %>% 
+  summarise(avg_community_score = mean(total_score)) %>% 
+  slice_min(avg_community_score, n = 12) %>% 
+  rename("Worst Areas" = area) %>% 
+  rename("Average Community Score" = avg_community_score)
+bottom_10_community
+```
+Some of the best areas for community belonging are the Outer Hebrides, Orkney and Shetland. These areas are rural, isolated communities. They are in the top 10 council areas for life expectancy (SOURCE!).
+
+Many of the areas in the top 10 for community belonging also have the highest SIMD (ie. least depravation).
+
+Those that rate their community belonging lowest tend to be urban areas with lower average SIMD.
+
+```{r}
+data_2019 %>% 
+  mutate(simd = as.numeric(simd)) %>% 
+  group_by(council) %>% 
+  summarise(avg_simd = mean(simd)) %>% 
+  arrange(desc(avg_simd))
+```
+
+### Neighbourhood Ratings Within Council Areas in Scotland
+```{r warning=FALSE}
+ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
+  geom_sf() +
+  scale_fill_distiller(palette = "PuBu", direction = 1) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        panel.grid = element_blank()) +
+  labs(
+    title = "Average Neighbourhood Ratings",
+    subtitle = "Scale is -1 to 1",
+    fill = "Score"
+  )
+#ggsave("neighbourhood_map.png")
+```
 
 ```{r message=FALSE}
 top_10_neighbourhood <- neighbourhood_rating %>% 
@@ -179,24 +325,27 @@ top_10_neighbourhood <- neighbourhood_rating %>%
   rename("Council Area" = area)
 top_10_neighbourhood
 
-top_10_community <- community_belonging %>% 
+bottom_10_neighbourhood <- neighbourhood_rating %>% 
   filter(measurement == "Percent", gender != "All") %>% 
   group_by(feature_code, area, year, gender) %>% 
   summarise(total_score = sum(score)) %>% 
   group_by(area) %>% 
-  summarise(avg_community_score = mean(total_score)) %>% 
-  slice_max(avg_community_score, n = 10)
-top_10_community
+  summarise(avg_neighbourhood_score = mean(total_score)) %>% 
+  slice_min(avg_neighbourhood_score, n = 12)
+bottom_10_neighbourhood
 ```
-Those that have high neighbourhood ratings and community belonging:
-```{r}
+Those with higher community belonging tend to also rate their neighbourhood higher.
+```{r message=FALSE}
 top_10_community %>% 
   inner_join(top_10_neighbourhood)
 ```
+There is a much clearer distinction with neighbourhoods in urban areas around the central belt receiving lower average ratings than rural areas, and the north.
 
-Shiny app exploration
+## General Characteristics of Highest and Lowest Rated Areas.
 
-An app was created to explore both the overall rating over the years, and distribution of ratings within each year. The data can be explored across the different council areas, as well as the different categories provided. The app has two tabs, one for neighbourhood rating and one for community belonging.
+This was explored through an R Shiny app.
+
+This allows exploration of both the overall neighbourhood rating, or community belonging over the years, as well as the distribution of ratings within each year. The data can be explored across the different council areas, as well as the different categories provided.
 
 An example output from the app:
 ![](app_screenshot.png)
@@ -390,25 +539,25 @@ Those that had access to green space within less than 10 minutes of walking appe
 
 ```{r}
 neighbourhood_rating %>% 
-      filter(area == "Scotland", measurement == "Percent",
-             walking_distance_to_nearest_greenspace != "All") %>% 
-      summarise(total_score = sum(score),
-                .by = c(year, walking_distance_to_nearest_greenspace)) %>% 
-      ggplot(aes(year, total_score, colour = walking_distance_to_nearest_greenspace)) +
-      geom_line() +
-      geom_point() +
-      scale_x_continuous(breaks = seq(2013, 2019, 1)) +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            text = element_text(size = 16)) +
-      labs(
-        title = "Neighbourhood Rating Score",
-        x = "Year",
-        y = "Total Score (-1 to 1)",
-        colour = "Walking Distance To\nNearest Greenspace"
-      )
+  filter(area == "Scotland", measurement == "Percent",
+         walking_distance_to_nearest_greenspace != "All") %>% 
+  summarise(total_score = sum(score),
+            .by = c(year, walking_distance_to_nearest_greenspace)) %>% 
+  ggplot(aes(year, total_score, colour = walking_distance_to_nearest_greenspace)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks = seq(2013, 2019, 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 16)) +
+  labs(
+    title = "Neighbourhood Rating Score",
+    x = "Year",
+    y = "Total Score (-1 to 1)",
+    colour = "Walking Distance To\nNearest Greenspace"
+  )
 ```
 
 _This means....._

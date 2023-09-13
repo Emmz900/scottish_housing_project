@@ -16,7 +16,7 @@ ui <- fluidPage(
                          survey of a random selection of people in private residences across Scotland.\n",
                          br(),
                          tags$b("Definitions:"),
-                         "SIMD = Scottish Index of Multiple Deprivation",
+                         "SIMD = Scottish Index of Multiple Deprivation. Higher values indicate less deprived areas.",
                          br(),
                          tags$h2("Findings")
                        ),
