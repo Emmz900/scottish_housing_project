@@ -1,5 +1,5 @@
 ---
-title: "Final project documentation template - PDA"
+title: "Final project documentation - Scottish Household Survey"
 output:
   html_document:
     toc: yes
@@ -15,21 +15,16 @@ output:
 
 ## Business intelligence and data-driven decision making
 
-*What insights can the business/organisation gain from your analysis and how will your analysis help the business/organisation make better decisions?*
 
-This analysis will help the Scottish Government understand the factors which influence community belonging and neighbourhood ratings. This will help identify groups and areas with a low sense of community, or lower neighbourhood ratings which could be targeted with schemes to improve this.
+This analysis will help the Scottish Government understand the factors which influence feelings of community belonging and neighbourhood ratings. This will help identify groups and areas with a low sense of community, or lower neighbourhood ratings which could be targeted with schemes to improve these aspects.
 
 ## Domain knowledge and the business context
-
-*Briefly describe the business/organisation and where your analysis fits within its aims/activity.*
 
 The Scottish Household Survey is completed annually on behalf of the Scottish Government. The results are used by the Scottish Government to measure progress towards the National Performance Framework (NPF). It is also used by local authorities, and to influence policy areas such as housing, fuel poverty, and climate change.
 
 # Data
 
 ## Internal and external data sources
-
-*Briefly describe your data sources and which were internal (provided by the organisation) and external (not sourced from the organisation's data)*
 
 **Internal Data Sources**
 
@@ -43,40 +38,34 @@ The Scottish Household Survey is completed annually on behalf of the Scottish Go
 
 ## Types of data
 
-*What kind of data did you work with? E.g. categorical and numerical data and their sub-types.*
+* **Categorical**  
 
-* Categorical  
+  + **Nominal**  
+  + Rural or urban   
+  + Council area  
+  + Tenure  
+  + Housing Type  
+  + Gender  
 
-- Nominal  
-Rural or urban   
-Council area  
-Tenure  
-Housing Type  
-Gender  
+  + **Ordinal**  
+  + Community Belonging and Neighbourhood Ratings were character strings which had an implied order of worst to best.  
+  + Access to greenspace had several categories with a given order of closest to furthest.  
 
-- Ordinal  
-Community Belonging and Neighbourhood Ratings were character strings which had an implied order of worst to best.  
-Access to greenspace had several categories with a given order of closest to furthest.  
+* **Numerical**  
 
-* Numerical  
+  + **Discrete** 
+  + The percentage of responses were discrete whole numbers between 0 and 100.  
+  + SIMD could be considered discrete numerical (1-5) or ordinal.  
+  + Ages could be considered continuous or discrete. They were given as whole numbers.  
 
-- Discrete 
-The percentage of responses were discrete whole numbers between 0 and 100.  
-SIMD could be considered discrete numerical (1-5) or ordinal.  
-Ages could be considered continuous or discrete. They were given as whole numbers.  
-
-- Continuous  
-None  
+  + **Continuous**  
+  + None  
 
 ## Data formats
-
-*What format did your data come in? E.g. all downloaded flat files (CSV) or any data from APIs, scraping etc.*
 
 The data was mainly excel or csv, with some spatial tab data.
 
 ## Data quality and bias
-
-*Briefly describe the quality of the data and whether you have any reasons to suggest the data is biased e.g. only data from a specific demographic even though a broader demographic would be of interest to the organisation.*
 
 There will be some bias in the data as only those in private households were surveyed, this excludes student accommodation and hospitals for example.
 
@@ -86,15 +75,12 @@ Some people may refuse to do the survey, if this tends to be people from a parti
 
 ## Ethical issues in data sourcing and extraction
 
-*Do you have any ethical concerns regarding the sourcing and extraction of your data?* 
-
 The aggregated data that is publicly available has no personal identifying information and I therefore have no ethical concerns.
 
 The dataset with the complete responses from 2019 may contain enough information to identify individuals and is therefore protected. Significant cleaning was completed to remove most of the collected information and focus only on the responses relevant to this analysis. The raw data has been excluded from the published repository to ensure privacy.
 
 ## Ethical implications of business requirements
 
-*Are there any ethical implications of the business requirements?*
 
 It is important to remember that correlation does not mean causation, and care should be taken when making assumptions about the results of the analysis. Communities and neighbourhoods are complex and there are many factors not explored here which will be significant for local people.
 
@@ -102,9 +88,8 @@ It is important to remember that correlation does not mean causation, and care s
 
 ## Stages in the data analysis process
 
-*What were the main stages in your data analysis process?*
 1. Initial exploration of the available data and business questions
-[2. Cleaning the data
+2. [Cleaning the data
 3. Visualisation of the data] x many cycles
 4. Creation of an R Shiny app to delve deeper in exploring patterns
 5. Spatial visualisations of council areas
@@ -113,28 +98,16 @@ It is important to remember that correlation does not mean causation, and care s
 
 ## Tools for data analysis
 
-*What were the main tools you used for your analysis?*
-* R Studio
-- R version 4.2.2
-- R Shiny
+* R Studio  
+  + R version 4.2.2  
+  + R Shiny  
 
 * Microsoft Powerpoint for final presentation of analysis
 
 ## Descriptive, diagnostic, predictive and prescriptive analysis
 
-_Please report under which of the below categories your analysis falls **and why** (can be more than one)_ 
-
-::: {.emphasis}
-**Descriptive Analytics** tells you what happened in the past.
-
-**Diagnostic Analytics** helps you understand why something happened in the past.
-
-**Predictive Analytics** predicts what is most likely to happen in the future.
-
-**Prescriptive Analytics** recommends actions you can take to affect those outcomes.
-:::
-
 This project was mainly descriptive analytics exploring how people have rated their neighbourhoods and communities in the past, how this has changed over time, and how it differs by area and demographic.
+There is also some diagnostic analytics to try and understand why certain areas rated their neighbourhoods and communities in the way that they did.
 
 # PDA Outcomes
 
