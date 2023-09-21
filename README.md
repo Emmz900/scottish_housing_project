@@ -5,7 +5,7 @@ This was an individual research project completed over 11 days for my final Code
 
 The project explores the factors impacting neighbourhood ratings and community belonging in Scotland using data from the Scottish Household Survey. The Scottish Household Survey is an annual, cross-sectional survey of a random selection of people in private residences across Scotland.
 
-An R Shiny app was created to aid exploration of the data, this can be found ![here](https://emma-menzies.shinyapps.io/scottish_household_survey_exploration/).
+An R Shiny app was created to aid exploration of the data, this can be found [here](https://emma-menzies.shinyapps.io/scottish_household_survey_exploration/).
 
 ## Key terms
 
