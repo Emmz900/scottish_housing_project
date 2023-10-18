@@ -65,6 +65,18 @@ The Scottish Household Survey is completed annually on behalf of the Scottish Go
 
 The data was mainly excel or csv, with some spatial tab data.
 
+* community_belonging.csv  
+  Rows: 43611 Columns: 13
+
+* neighbourhood_rating.csv  
+  Rows: 38055 Columns: 13
+  
+* council_area_codes.csv  
+  Rows: 44 Columns: 14
+  
+* shs2019_social_public.tab  
+  Rows: 10,528 Columns: 2,495
+
 ## Data quality and bias
 
 There will be some bias in the data as only those in private households were surveyed, this excludes student accommodation and hospitals for example.
