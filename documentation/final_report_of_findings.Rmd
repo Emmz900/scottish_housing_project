@@ -58,16 +58,17 @@ spatial_community_joined <- council_boundaries %>%
 
 # full results from 2019 survey
 data_2019 <- read_csv(here("clean_data/full_2019_responses.csv")) %>% 
-  mutate(greenspace = factor(greenspace, levels = c(
+  mutate(
+    greenspace = factor(greenspace, levels = c(
     "5 mins or less",
     "6-10 mins",
     "11-20 mins",
     "21-30 mins",
     "More than 30",
     "Don't know")),
-    community_belonging = factor(community_belonging, 
+    community_belonging = factor(community_belonging,
                                  levels = c("Don't know",
-                                            "Not at all strongly", 
+                                            "Not at all strongly",
                                             "Not very strongly",
                                             "Fairly strongly",
                                             "Very strongly")),
@@ -84,16 +85,79 @@ data_2019 <- read_csv(here("clean_data/full_2019_responses.csv")) %>%
       community_belonging == "Fairly strongly" ~ 3,
       community_belonging == "Very strongly" ~ 4
     ),
-    simd = factor(simd)
+    simd = factor(simd),
+    neighbourhood_score = case_when(
+      neighbourhood_rating == "No opinion" ~ 0,
+      neighbourhood_rating == "Very poor" ~ 1,
+      neighbourhood_rating == "Fairly poor" ~ 2,
+      neighbourhood_rating == "Fairly good" ~ 3,
+      neighbourhood_rating == "Very good" ~ 4
+    )
   ) %>% 
   mutate(across(where(is.character), as.factor))
 ```
+
+```{r}
+# Proportion of different groups in each council area, joined with the spatial data
+prop_per_council <-
+  data_2019 %>% 
+  group_by(council) %>% 
+  mutate(white = if_else(ethnicity == "White", 1, 0),
+         simd = as.integer(simd),
+         urban = if_else(urban_rural == "Urban", 1, 0),
+         adult = if_else(household_type == "Adult", 1, 0),
+         pensioner = if_else(household_type == "Pensioner", 1, 0),
+         children = if_else(household_type == "Children", 1, 0),
+         female = if_else(gender == "Female", 1, 0),
+         owned = case_when(str_detect(tenure, "Owned") ~ 1, .default = 0),
+         social_rent = if_else(tenure == "Social Rented", 1, 0),
+         private_rent = if_else(tenure == "Private Rented", 1, 0),
+  ) %>% 
+  summarise(age = mean(randage),
+            prop_white = mean(white),
+            simd = mean(simd),
+            prop_urban = mean(urban),
+            prop_adult = mean(adult),
+            prop_child = mean(children),
+            prop_pensioner = mean(pensioner),
+            prop_female = mean(female),
+            prop_owned = mean(owned),
+            prop_social_rent = mean(social_rent),
+            prop_private_rent = mean(private_rent)
+  )
+
+spatial_neighbourhood_full <- spatial_neighbourhood_joined %>% 
+  left_join(prop_per_council, by = join_by(local_auth == council))
+```
+
 
 ### Functions
 ```{r}
 source(here("analysis_scripts_and_functions/test_diff_in_means.R"))
 source(here("analysis_scripts_and_functions/visualise_diff_in_means.R"))
 source(here("analysis_scripts_and_functions/create_2019_graph.R"))
+
+plot_scores <- function(category, title_wording = "Average Community Belonging"){
+  data_2019 %>% 
+    group_by(council, {{category}}) %>% 
+    summarise(average_score = mean(community_score)) %>% 
+    ggplot(aes({{category}}, average_score)) +
+    geom_boxplot() +
+    theme_light() +
+    labs(
+      title = str_c("Community Belonging by ", title_wording),
+      y = "Average Community Belonging Score",
+      x = title_wording
+    )
+}
+
+plot_scotland <- function(category){
+  spatial_neighbourhood_full %>% 
+    ggplot(aes(fill = {{category}}, colour = score)) +
+    geom_sf() +
+  scale_color_distiller(palette = "RdYlGn", direction = 1) +
+  scale_fill_distiller(palette = "Greys", direction = 1)
+}
 ```
 
 # 1. Background
@@ -209,22 +273,6 @@ data_2019 %>%
 ```
 Feelings of community belonging are fairly high in Scotland with 80% of people rating it "Fairly" or "Very" strongly.
 
-```{r warning=FALSE}
-plot_scores <- function(category, title_wording = "Average Community Belonging"){
-  data_2019 %>% 
-    group_by(council, {{category}}) %>% 
-    summarise(average_score = mean(community_score)) %>% 
-    ggplot(aes({{category}}, average_score)) +
-    geom_boxplot() +
-    theme_light() +
-    labs(
-      title = str_c("Community Belonging by ", title_wording),
-      y = "Average Community Belonging Score",
-      x = title_wording
-    )
-}
-```
-
 ```{r message=FALSE}
 plot_scores(simd, "SIMD")
 plot_scores(urban_rural, "Urban or Rural")
@@ -234,7 +282,13 @@ plot_scores(tenure, "Type of Tenure")
 plot_scores(greenspace, "Distance to Greenspace")
 ```
 
-EXPLANATION!
+* Community belonging increases with a higher SIMD (less deprived). The most improvement could be seen in lower SIMD areas.  
+* Community belonging is higher in rural areas compared to urban areas. The focus should be on improving community belonging in urban areas.  
+* Pensioners have higher community belonging than households with children or working age adults. Families and working age adults should be the focus of improving community belonging.  
+* Females in general feel slightly more community belonging. The reasons for this could be explored to improve community belonging for men also.  
+* Those that own their properties feel higher community belonging than those in social rented accommodation. Efforts could be focussed on areas with high social renting numbers.   
+* Only 1% of the data was from private rented accommodation which is not sufficient to draw conclusions from.
+* Greenspace does not appear to have a significant impact on community belonging.
 
 ### Neighbourhood Ratings in the Whole of Scotland
 ```{r}
@@ -257,6 +311,39 @@ data_2019 %>%
 ```
 Neighbourhood ratings are even higher with almost 60% of people rating their local neighbourhood "Very good", and only 5% rating their neighbourhood "Fairly" or "Very" poor.
 
+
+```{r warning=FALSE}
+plot_neighbourhood <- function(category, title_wording = "Average Neighbourhood Rating"){
+  data_2019 %>% 
+    group_by(council, {{category}}) %>% 
+    summarise(average_score = mean(neighbourhood_score)) %>% 
+    ggplot(aes({{category}}, average_score)) +
+    geom_boxplot() +
+    theme_light() +
+    labs(
+      title = str_c("Neighbourhood Rating by ", title_wording),
+      y = "Average Neighbourhood Rating Score",
+      x = title_wording
+    )
+}
+```
+
+```{r message=FALSE}
+plot_neighbourhood(simd, "SIMD")
+plot_neighbourhood(urban_rural, "Urban or Rural")
+plot_neighbourhood(household_type, "Household Type")
+plot_neighbourhood(gender, "Gender")
+plot_neighbourhood(tenure, "Type of Tenure")
+plot_neighbourhood(greenspace, "Distance to Greenspace")
+```
+
+* Neighbourhood Ratings increase with SIMD (decreasing depravity), lower SIMD areas should be targeted.  
+* Rural areas have a higher average neighbourhood rating. Urban areas should be the priority for improving neighbourhoods.  
+* Pensioner households have a marginally higher average neighbourhood rating than other household types.  
+* Males and females gave fairly similar neighbourhood ratings.  
+* Those in social renting rated their neighbourhoods lower than home owners. Areas with high levels of social renting should be the priority for improving neighbourhoods.
+* Increasing distance to greenspace does not have a significant impact on neighbourhood ratings.
+
 ### Community Belonging Within Council Areas in Scotland
 ```{r}
 ggplot(spatial_community_joined, aes(fill = score)) +
@@ -274,41 +361,37 @@ ggplot(spatial_community_joined, aes(fill = score)) +
 ```
 
 ```{r message=FALSE}
-top_10_community <- community_belonging %>% 
-  filter(measurement == "Percent", gender != "All") %>% 
-  group_by(feature_code, area, year, gender) %>% 
-  summarise(total_score = sum(score)) %>% 
-  group_by(area) %>% 
-  summarise(avg_community_score = mean(total_score)) %>% 
+top_10_community <- data_2019 %>% 
+  mutate(simd = as.numeric(simd),
+         urban = if_else(urban_rural == "Urban", 1, 0)) %>% 
+  group_by(council) %>% 
+  summarise(avg_community_score = mean(community_score),
+            #avg_neighbourhood_score = mean(neighbourhood_score),
+            prop_urban = mean(urban)) %>%  
   slice_max(avg_community_score, n = 10) %>% 
-  rename("Best Areas" = area) %>% 
-  rename("Average Community Score" = avg_community_score)
+  rename("Top Rated Areas" = council) %>% 
+  rename("Average Community Score" = avg_community_score) %>% 
+  #rename("Average Neighbourhood Score" = avg_neighbourhood_score) %>% 
+  rename("Proportion of Urban Responses" = prop_urban)
 top_10_community
 
-bottom_10_community <- community_belonging %>% 
-  filter(measurement == "Percent", gender != "All") %>% 
-  group_by(feature_code, area, year, gender) %>% 
-  summarise(total_score = sum(score)) %>% 
-  group_by(area) %>% 
-  summarise(avg_community_score = mean(total_score)) %>% 
-  slice_min(avg_community_score, n = 12) %>% 
-  rename("Worst Areas" = area) %>% 
-  rename("Average Community Score" = avg_community_score)
+bottom_10_community <- data_2019 %>% 
+  mutate(simd = as.numeric(simd),
+         urban = if_else(urban_rural == "Urban", 1, 0)) %>% 
+  group_by(council) %>% 
+  summarise(avg_community_score = mean(community_score),
+            #avg_neighbourhood_score = mean(neighbourhood_score),
+            prop_urban = mean(urban)) %>% 
+  slice_min(avg_community_score, n = 10) %>% 
+  rename("Lowest Rated Areas" = council) %>% 
+  rename("Average Community Score" = avg_community_score) %>% 
+  #rename("Average Neighbourhood Score" = avg_neighbourhood_score) %>% 
+  rename("Proportion of Urban Responses" = prop_urban) 
 bottom_10_community
 ```
-Some of the best areas for community belonging are the Outer Hebrides, Orkney and Shetland. These areas are rural, isolated communities. They are in the top 10 council areas for life expectancy (SOURCE!).
+Some of the best areas for community belonging are the Outer Hebrides (Eilean Siar), Orkney and Shetland. These areas are rural, isolated communities. They are in the top 5 council areas for life expectancy (Life Expectancy in Scotland, 2019-2021 Report, ![link](https://www.nrscotland.gov.uk/files/statistics/life-expectancy-in-scotland/19-21/life-expectancy-19-21-report.pdf)).
 
-Many of the areas in the top 10 for community belonging also have the highest SIMD (ie. least depravation).
-
-Those that rate their community belonging lowest tend to be urban areas with lower average SIMD.
-
-```{r}
-data_2019 %>% 
-  mutate(simd = as.numeric(simd)) %>% 
-  group_by(council) %>% 
-  summarise(avg_simd = mean(simd)) %>% 
-  arrange(desc(avg_simd))
-```
+Those that rate their community belonging lowest tend to be more urban areas.
 
 ### Neighbourhood Ratings Within Council Areas in Scotland
 ```{r warning=FALSE}
@@ -327,43 +410,54 @@ ggplot(spatial_neighbourhood_joined, aes(fill = score)) +
 ```
 
 ```{r message=FALSE}
-top_10_neighbourhood <- neighbourhood_rating %>% 
-  filter(measurement == "Percent", gender != "All") %>% 
-  group_by(feature_code, area, year, gender) %>% 
-  summarise(total_score = sum(score)) %>% 
-  group_by(area) %>% 
-  summarise(avg_neighbourhood_score = mean(total_score)) %>% 
+top_10_neighbourhood <- data_2019 %>% 
+  mutate(simd = as.numeric(simd),
+         urban = if_else(urban_rural == "Urban", 1, 0)) %>% 
+  group_by(council) %>% 
+  summarise(avg_neighbourhood_score = mean(neighbourhood_score),
+            prop_urban = mean(urban)) %>% 
   slice_max(avg_neighbourhood_score, n = 10) %>% 
   rename("Average Neighbourhood Rating" = avg_neighbourhood_score) %>% 
-  rename("Council Area" = area)
+  rename("Top Rated Areas" = council) %>% 
+  rename("Proportion of Urban Responses" = prop_urban)
 top_10_neighbourhood
 
-bottom_10_neighbourhood <- neighbourhood_rating %>% 
-  filter(measurement == "Percent", gender != "All") %>% 
-  group_by(feature_code, area, year, gender) %>% 
-  summarise(total_score = sum(score)) %>% 
-  group_by(area) %>% 
-  summarise(avg_neighbourhood_score = mean(total_score)) %>% 
-  slice_min(avg_neighbourhood_score, n = 12)
+bottom_10_neighbourhood <- data_2019 %>% 
+  mutate(simd = as.numeric(simd),
+         urban = if_else(urban_rural == "Urban", 1, 0)) %>% 
+  group_by(council) %>% 
+  summarise(avg_neighbourhood_score = mean(neighbourhood_score),
+            prop_urban = mean(urban)) %>%  
+  slice_min(avg_neighbourhood_score, n = 10) %>% 
+  rename("Average Neighbourhood Rating" = avg_neighbourhood_score) %>% 
+  rename("Lowest Rated Areas" = council) %>% 
+  rename("Proportion of Urban Responses" = prop_urban)
 bottom_10_neighbourhood
 ```
-Those with higher community belonging tend to also rate their neighbourhood higher.
+The lowest rated areas all have a proportion of urban responses greater than 85%.
+
+Those with higher community belonging tend to also rate their neighbourhood higher:
+
 ```{r message=FALSE}
 top_10_community %>% 
   inner_join(top_10_neighbourhood)
 ```
 There is a much clearer distinction with neighbourhoods in urban areas around the central belt receiving lower average ratings than rural areas, and the north.
 
+East Renfrewshire would be an interesting area to look into further as it has a very high proportion of people from urban locations and yet is in the top 10 for both community belonging and neighbourhood ratings.
+
 ## General Characteristics of Highest and Lowest Rated Areas.
 
-This was explored through an R Shiny app.
+The aggregated data was first explored through an R Shiny app.
 
 This allows exploration of both the overall neighbourhood rating, or community belonging over the years, as well as the distribution of ratings within each year. The data can be explored across the different council areas, as well as the different categories provided.
 
 An example output from the app:
 ![](app_screenshot.png)
 
-### Outer Hebrides (Na h-Eileanan Siar)
+### Highest Rated Areas
+
+#### Outer Hebrides (Na h-Eileanan Siar)
 
 The key features of those surveyed from 2013 to 2019 in the Outer Hebrides are:
 
@@ -380,7 +474,7 @@ A higher percentage of people in **owned properties** also said that their neigh
 
 Similarly, a higher percentage of **pensioners** voted rated their neighbourhood and community belonging the highest option compared to households with adults or with children, and tended to rate both higher as a whole.
 
-### Orkney Islands
+#### Orkney Islands
 
 Those surveyed were:
 
@@ -398,7 +492,7 @@ Although **rural** areas tended to be rated higher for both neighbourhood rating
 
 The average rating significantly dropped in 2019 compared to previous years.
 
-### Shetland Islands
+#### Shetland Islands
 
 Those surveyed were:
 
@@ -414,31 +508,9 @@ In general **pensioners** were more likely to give their neighbourhood a higher 
 
 *Note:* Is this survey bias or representative of these areas?
 
-## Bottom Rated areas
-```{r}
-bottom_10_neighbourhood <- neighbourhood_rating %>% 
-  filter(measurement == "Percent", gender != "All") %>% 
-  group_by(feature_code, area, year, gender) %>% 
-  summarise(total_score = sum(score)) %>% 
-  group_by(area) %>% 
-  summarise(avg_neighbourhood_score = mean(total_score)) %>% 
-  slice_min(avg_neighbourhood_score, n = 12)
-bottom_10_neighbourhood
+### Bottom Rated areas
 
-bottom_10_community <- community_belonging %>% 
-  filter(measurement == "Percent", gender != "All") %>% 
-  group_by(feature_code, area, year, gender) %>% 
-  summarise(total_score = sum(score)) %>% 
-  group_by(area) %>% 
-  summarise(avg_community_score = mean(total_score)) %>% 
-  slice_min(avg_community_score, n = 12)
-bottom_10_community
-```
-```{r}
-bottom_10_community %>% 
-  inner_join(bottom_10_neighbourhood)
-```
-### Dundee City
+#### Dundee City
 
 * Urban
 * White
@@ -458,7 +530,7 @@ External findings:
 
 ![](https://www.nrscotland.gov.uk/files/statistics/council-area-data-sheets/dundee-city-council-profile.html)
 
-### Aberdeen City
+#### Aberdeen City
 
 * Urban
 * Least deprived
@@ -470,7 +542,7 @@ Low ratings from:
 * more than 10 minutes from greenspace
 * adults and children (not pensioners)
 
-### Glasgow City
+#### Glasgow City
 
 * Urban
 
@@ -482,7 +554,7 @@ Low ratings from:
 * more than 10 minutes from greenspace
 * males (community) / females (neighbourhood)
 
-## Change
+### Change in Ratings over time
 
 ```{r}
 ggplot(spatial_neighbourhood_joined, aes(fill = diff)) +
@@ -541,6 +613,31 @@ spatial_neighbourhood_joined %>%
 
 A shiny app was created to help explore the data in an interactive way. This will be referred to here and can be found within the `explanatory_app` folder of this repository.
 
+### Analysis of full responses
+
+The following maps indicate the average neighbourhood rating for each council area in red to green borders, with the intensity of the grey fill indicating the proportion of the given group in that area.
+
+```{r}
+plot_scotland(age)
+plot_scotland(simd)
+plot_scotland(prop_urban)
+plot_scotland(prop_white)
+plot_scotland(prop_female)
+```
+
+
+```{r}
+plot_scotland(prop_adult)
+plot_scotland(prop_child)
+plot_scotland(prop_pensioner)
+```
+
+```{r}
+plot_scotland(prop_owned)
+plot_scotland(prop_private_rent)
+plot_scotland(prop_social_rent)
+```
+
 # 3. Does access to greenspace impact neighbourhood ratings or community belonging?
 
 ```{r}
@@ -573,18 +670,20 @@ neighbourhood_rating %>%
   )
 ```
 
-_This means....._
+Neighbourhood ratings have tended to increase slightly for those who know how close their nearest greenspace is.
 
 ```{r}
 create_2019_graph_community(walking_distance_to_nearest_greenspace)
 ```
-_This means..._
+Generally people rated their community fairly highly, with the largest proportion of people rating it "Fairly Strongly".
+
+People who are less than 10 minutes from their nearest greenspace were more likely to rate their community belonging "Fairly" or "Very" strongly compared to those further away, or who do not know. Those that do not know how far they are from their nearest greenspace were significantly more likely to rate their community belonging "Not at all strongly".
 
 ## Conclusions
 
-* Those who did not know how far to their nearest greenspace tended to rate their feelings of community belonging lower. 
+* Those who did not know how far to their nearest greenspace tended to rate their feelings of community belonging lower.  
 * Those with a greenspace within 10 minutes walking tended to rate their neighbourhoods, and feeling of community belonging slightly higher than those that didn't. 
-* Increasing access to greenspace may help to increase neighbourhood ratings and community belonging.
+* Increasing access to greenspace may help to increase neighbourhood ratings and community belonging, this will likely be more effective for those who actively use greenspace and will seek it out.
 
 # 4. Which other factors influence neighbourhood ratings and community belonging?
 

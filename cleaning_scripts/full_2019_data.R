@@ -23,6 +23,7 @@ data_clean <- data_small %>%
   rename("ethnicity" = "RANDETH2012") %>% 
   rename("simd" = "MD20QUIN") %>% 
   rename("urban_rural" = "SHS_2CLA") %>% 
+  # factor categorical columns
   mutate(
     household_type = factor(case_when(
       hhtype_new %in% c(1, 2, 6, 7) ~ "Adult",
